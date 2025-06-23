@@ -1,0 +1,74 @@
+﻿<Window x:Class="AutoCode.Presentation.DatabaseTableList"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:AutoCode.Presentation"
+        mc:Ignorable="d"
+        xmlns:busyIndicator="https://github.com/moh3ngolshani/BusyIndicator"
+        Title="DatabaseTableList" WindowStyle="None" ResizeMode="NoResize" WindowState="Maximized" MinHeight="780" MinWidth="1380" WindowStartupLocation="CenterScreen" >
+    <busyIndicator:BusyMask 
+            x:Name="BusyIndicator"
+            BusyContent="Please wait..."
+            BusyContentMargin="10"
+            IsBusy="False" IndicatorType="Ellipse"
+            IsBusyAtStartup="False" >   
+        <Border  BorderThickness="2px" Margin="0" BorderBrush="#145DA0" CornerRadius="4" Background="#B1D4E0">
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="10px"></ColumnDefinition>
+                    <ColumnDefinition></ColumnDefinition>
+                    <ColumnDefinition></ColumnDefinition>
+                    <ColumnDefinition Width="10px"></ColumnDefinition>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="10px"></RowDefinition>
+                    <RowDefinition Height="auto"></RowDefinition>
+                    <RowDefinition Height="auto"></RowDefinition>
+                    <RowDefinition></RowDefinition>
+                    <RowDefinition></RowDefinition>
+                    <RowDefinition Height="10px"></RowDefinition>
+                </Grid.RowDefinitions>
+                <Image Source="/Images/background.jpg"  Opacity="0.1" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="10" Grid.RowSpan="10"  VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Stretch="Fill"></Image>
+
+                <Label x:Name="head" FontSize="30" HorizontalAlignment="Center" Margin="0,10,0,10" Grid.ColumnSpan="2" Grid.Column="1" Grid.Row="1" Padding="7"  Style="{StaticResource LabelRegular}" FontFamily="Impact" >.Net Code Generator</Label>
+                <Button x:Name="btnClose" FontSize="20" HorizontalAlignment="Right" Margin="0,10,0,10" Height="50" Width="40" Grid.ColumnSpan="2" Grid.Column="1" ToolTip="Close" Grid.Row="1" Padding="7"  Style="{StaticResource ButtonRegular}" Background="#FFD40909" Click="btnClose_Click" >X</Button>
+                <Grid Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" VerticalAlignment="Top">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*"></ColumnDefinition>
+                        <ColumnDefinition Width="3*"></ColumnDefinition>
+                        <ColumnDefinition Width="4*"></ColumnDefinition>
+                        <ColumnDefinition Width="1*"></ColumnDefinition>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Orientation="Horizontal" Grid.Column="0">
+                        <Label x:Name="serverType" Grid.Column="1" Grid.Row="3" Padding="7"  Style="{StaticResource LabelRegular}" Margin="0,0,0,0" Grid.RowSpan="2"  >Select Table:</Label>
+                        <ComboBox x:Name="cmbTable" Grid.Column="2" Style="{StaticResource ComboBoxRegular}" Width="170" Margin="0" Grid.Row="3" VerticalAlignment="Center" >
+                        </ComboBox>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Grid.Column="1" VerticalAlignment="Top">
+                        <Label Margin="15,0,0,0" x:Name="type" Grid.Column="1" Grid.Row="3" Padding="7"  Style="{StaticResource LabelRegular}" Grid.RowSpan="2"  >Select Object:</Label>
+                        <CheckBox x:Name="chkObjModel" VerticalAlignment="Center" Style="{StaticResource CheckBoxRegular}">Model</CheckBox>
+                        <CheckBox x:Name="chkObjSP" VerticalAlignment="Center"  Style="{StaticResource CheckBoxRegular}">Store Procedure</CheckBox>
+                        <CheckBox  x:Name="chkObjCode" VerticalAlignment="Center"  Style="{StaticResource CheckBoxRegular}">Code</CheckBox>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal"  Grid.Column="2" VerticalAlignment="Top">
+
+
+                        <Label Margin="10,0,0,0" x:Name="crudtype" Grid.Column="1" Grid.Row="3" Padding="7"  Style="{StaticResource LabelRegular}" Grid.RowSpan="2"  >Select CRUD:</Label>
+                        <CheckBox x:Name="chkCRUDInsert" VerticalAlignment="Center"  Style="{StaticResource CheckBoxRegular}">Insert</CheckBox>
+                        <CheckBox x:Name="chkCRUDUpdate" VerticalAlignment="Center"  Style="{StaticResource CheckBoxRegular}">Update</CheckBox>
+                        <CheckBox x:Name="chkCRUDHardDeleteById" VerticalAlignment="Center"  Style="{StaticResource CheckBoxRegular}">Hard Delete By Id</CheckBox>
+                        <CheckBox x:Name="chkCRUDSoftDeleteById" VerticalAlignment="Center"  Style="{StaticResource CheckBoxRegular}">Soft Delete By Id</CheckBox>
+                        <CheckBox x:Name="chkCRUDSelectById" VerticalAlignment="Center"  Style="{StaticResource CheckBoxRegular}">Select By Id</CheckBox>
+                        <CheckBox x:Name="chkCRUDSelectAll" VerticalAlignment="Center"  Style="{StaticResource CheckBoxRegular}">Select all</CheckBox>
+
+                    </StackPanel>
+                    <Button x:Name="btnGenerate"  HorizontalAlignment="Right"    Grid.Column="3" Height="30px" ToolTip="Close" Grid.Row="1" Padding="7"  Style="{StaticResource ButtonRegular}" Click="btnGenerate_Click"  >Generate</Button>
+
+                </Grid>
+                    <TextBox x:Name="txtBlockCode" Style="{StaticResource TextBoxRegular}" TextWrapping="WrapWithOverflow" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" IsReadOnly="True" Grid.Row="3" Grid.RowSpan="2" Grid.ColumnSpan="2" Grid.Column="1" Margin="10" ></TextBox>
+            </Grid>
+        </Border>
+    </busyIndicator:BusyMask>
+</Window>

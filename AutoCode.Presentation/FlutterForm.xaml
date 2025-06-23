@@ -1,0 +1,213 @@
+﻿<Window x:Class="AutoCode.Presentation.FlutterForm"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:AutoCode.Presentation"
+        mc:Ignorable="d"
+        Title="FlutterForm"
+        xmlns:busyIndicator="https://github.com/moh3ngolshani/BusyIndicator"
+        WindowStyle="None" ResizeMode="NoResize" WindowState="Maximized" MinHeight="780" MinWidth="1380" WindowStartupLocation="CenterScreen"
+         Height="450" Width="800">
+    <busyIndicator:BusyMask 
+            x:Name="BusyIndicator"
+            BusyContent="Please wait..."
+            BusyContentMargin="10"
+            IsBusy="False" IndicatorType="Ellipse"
+            IsBusyAtStartup="False" >
+        <Border  BorderThickness="2px" Margin="0" BorderBrush="#145DA0" CornerRadius="4" Background="#B1D4E0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="20px"></ColumnDefinition>
+                    <ColumnDefinition Width="*" MinWidth="150px"></ColumnDefinition>
+                    <ColumnDefinition Width="20px"></ColumnDefinition>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto"></RowDefinition>
+                    <RowDefinition Height="auto"></RowDefinition>
+                    <RowDefinition Height="auto"></RowDefinition>
+                    <RowDefinition Height="*" MinHeight="400"></RowDefinition>
+                </Grid.RowDefinitions>
+
+                <!--heading-->
+                <Label x:Name="head" FontSize="30" HorizontalAlignment="Left" Margin="0,10,0,10" Grid.Column="1" Grid.Row="0" Padding="7"  Style="{StaticResource LabelRegular}" FontFamily="Impact" >Flutter Code Generator</Label>
+
+
+                <!-- checkboxes stackpanel-->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Grid.Row="0" Grid.Column="1">
+
+                    <!--CheckBox For Form Code-->
+                    <CheckBox Content="Form" x:Name="formCheckBox" Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" VerticalAlignment="Center" HorizontalAlignment="Center"
+                         Margin="0,10,10,10" Style="{StaticResource CheckBoxRegular}"/>
+
+                    <!--CheckBox For List Code-->
+                    <CheckBox Content="List" x:Name="listCheckBox" Grid.Row="0" Grid.Column="1"
+                         Grid.ColumnSpan="2" VerticalAlignment="Center" HorizontalAlignment="Center" Checked="listCheckBox_Checked" Unchecked="listCheckBox_Unchecked" Margin="10,10,10,10"
+                            Style="{StaticResource CheckBoxRegular}" />
+
+                    <!--CheckBox For Notification Code-->
+                    <CheckBox Content="Notification" x:Name="notificationCheckBox" Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="3" VerticalAlignment="Center" Margin="10,10,10,10" HorizontalAlignment="Center"
+                        Style="{StaticResource CheckBoxRegular}"/>
+                    
+                </StackPanel>
+
+
+
+
+                <!--Generate Button-->
+                <Button x:Name="btnGenerate" Grid.Column="0" Grid.Row="0" Grid.ColumnSpan="2" Style="{StaticResource ButtonRegular}" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,10,50,10" Click="btnGenerate_Click">Generate</Button>
+
+                <!--Close Button-->
+                <Button x:Name="btnClose" FontSize="20" HorizontalAlignment="Right" Margin="0,10,10,10" Height="50" Width="40" Grid.ColumnSpan="2" Grid.Column="1" ToolTip="Close" Grid.Row="0" Padding="7"  Style="{StaticResource ButtonRegular}" Background="#FFD40909" Click="btnClose_Click" >X</Button>
+
+
+                <!--Table CheckBox for allowEditing and all-->
+                <StackPanel x:Name="stackActions" Orientation="Horizontal" Grid.Column="1" Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Left">
+                    <Label Margin="15,0,0,0" x:Name="codeType" Grid.Column="1" Grid.Row="3" Padding="7"  Style="{StaticResource LabelRegular}" Grid.RowSpan="2"  >Select Code Type(s):</Label>
+                    <CheckBox x:Name="chkModelCode" VerticalAlignment="Center" IsChecked="False" Style="{StaticResource CheckBoxRegular}">Model</CheckBox>
+                    <CheckBox x:Name="chkUICode" VerticalAlignment="Center" IsChecked="False" Margin="0,0,10,0" Style="{StaticResource CheckBoxRegular}">UI</CheckBox>
+
+                    <StackPanel Orientation="Horizontal" x:Name="listCheckBoxs" Visibility="Collapsed">
+                        <Label Margin="15,0,0,0" x:Name="action" Grid.Column="1" Grid.Row="3" Padding="7"  Style="{StaticResource LabelRegular}">Select Action(s):</Label>
+                        <CheckBox x:Name="chkAllowEdit" VerticalAlignment="Center" IsChecked="False" Style="{StaticResource CheckBoxRegular}">Allow Edit Data</CheckBox>
+                        <CheckBox x:Name="chkAllowDelete" VerticalAlignment="Center" IsChecked="False"  Style="{StaticResource CheckBoxRegular}">Allow Delete Data</CheckBox>
+                        <CheckBox x:Name="chkAllowPagination" VerticalAlignment="Center" IsChecked="False"  Style="{StaticResource CheckBoxRegular}">Allow Pagination</CheckBox>
+                    </StackPanel>
+                </StackPanel>
+
+                <Grid Grid.Row="2" Grid.Column="1">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="200"/>
+                        <RowDefinition Height="800"/>
+                    </Grid.RowDefinitions>
+
+                    <!--Data Grid-->
+                    <DataGrid x:Name="dataGrid" AutoGenerateColumns="False" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Grid.Row="0">
+                        <DataGrid.Columns>
+                            <!--Name-->
+                            <DataGridTemplateColumn Header="Name" Width="2*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Padding="5" Text="{Binding Name}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                                <DataGridTemplateColumn.CellEditingTemplate>
+                                    <DataTemplate>
+                                        <TextBox Padding="5" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellEditingTemplate>
+                            </DataGridTemplateColumn>
+                            <!--Label-->
+                            <DataGridTemplateColumn Header="Label" Width="2*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Padding="5" Text="{Binding Label}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                                <DataGridTemplateColumn.CellEditingTemplate>
+                                    <DataTemplate>
+                                        <TextBox Padding="5" Text="{Binding Label, UpdateSourceTrigger=PropertyChanged}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellEditingTemplate>
+                            </DataGridTemplateColumn>
+                            <!--Data Type-->
+                            <DataGridTemplateColumn Header="Data Type" Width="2*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Padding="5" Text="{Binding Type}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                                <DataGridTemplateColumn.CellEditingTemplate>
+                                    <DataTemplate>
+                                        <TextBox Padding="5" Text="{Binding Type, UpdateSourceTrigger=PropertyChanged}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellEditingTemplate>
+                            </DataGridTemplateColumn>
+                            <!--Element Type-->
+                            <DataGridTemplateColumn Header="Element Type" Width="2*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Padding="5" Text="{Binding FieldType}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                                <DataGridTemplateColumn.CellEditingTemplate>
+                                    <DataTemplate>
+                                        <ComboBox Padding="5" SelectedItem="{Binding FieldType}" 
+                         ItemsSource="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=FieldTypes}"
+                             SelectionChanged="ComboBox_SelectionChanged">
+                                        </ComboBox>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellEditingTemplate>
+                            </DataGridTemplateColumn>
+                            <!--Required-->
+                            <DataGridTemplateColumn Header="Required" Width="0.5*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <CheckBox  VerticalAlignment="Center" HorizontalAlignment="Center" IsChecked="{Binding IsRequired}" IsEnabled="False"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                                <DataGridTemplateColumn.CellEditingTemplate>
+                                    <DataTemplate>
+                                        <CheckBox  VerticalAlignment="Center" HorizontalAlignment="Center" IsChecked="{Binding IsRequired}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellEditingTemplate>
+                            </DataGridTemplateColumn>
+                            <!--isShow-->
+                            <DataGridTemplateColumn Header="Show in Table" Width="0.7*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <CheckBox  VerticalAlignment="Center" HorizontalAlignment="Center" IsChecked="{Binding IsShow}" IsEnabled="False"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                                <DataGridTemplateColumn.CellEditingTemplate>
+                                    <DataTemplate>
+                                        <CheckBox  VerticalAlignment="Center" HorizontalAlignment="Center" IsChecked="{Binding IsShow}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellEditingTemplate>
+                            </DataGridTemplateColumn>
+
+                            <!--Validation Message-->
+                            <!--<DataGridTemplateColumn Header="Validation Message" Width="2*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Padding="5" Text="{Binding ValidationMessage}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                                <DataGridTemplateColumn.CellEditingTemplate>
+                                    <DataTemplate>
+                                        <TextBox Padding="5" Text="{Binding ValidationMessage, UpdateSourceTrigger=PropertyChanged}" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellEditingTemplate>
+                            </DataGridTemplateColumn>-->
+
+                            <!--Delete Button-->
+                            <DataGridTemplateColumn Header="" Width="1*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="Delete" Click="DeleteButton_Click"  Style="{StaticResource ButtonRegular}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!--Code Generate Grid-->
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="5*"/>
+                            <ColumnDefinition Width="5*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!--Form Code Block-->
+                        <TextBox x:Name="txtBlockCode" Style="{StaticResource TextBoxRegular}" TextWrapping="WrapWithOverflow" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" IsReadOnly="True"  Grid.Column="0"></TextBox>
+
+                        <!--List Code Block-->
+                        <TextBox x:Name="txtBlockListCode" Style="{StaticResource TextBoxRegular}" TextWrapping="WrapWithOverflow" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" IsReadOnly="True"  Grid.Column="1"></TextBox>
+                    </Grid>
+                </Grid>
+
+            </Grid>
+        </Border>
+    </busyIndicator:BusyMask>
+</Window>

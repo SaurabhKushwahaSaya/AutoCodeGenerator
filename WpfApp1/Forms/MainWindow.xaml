@@ -1,0 +1,75 @@
+﻿<Window x:Class="WpfApp1.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:busyIndicator="https://github.com/moh3ngolshani/BusyIndicator"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WpfApp1" WindowStartupLocation="CenterScreen"
+        x:Name="MainWindow1"
+        mc:Ignorable="d" WindowStyle="SingleBorderWindow"  ResizeMode="CanMinimize"
+        Title="MainWindow" Width="500" Height="260">
+    <Window.Resources>
+
+        <LinearGradientBrush x:Key="IndicatorForeground" StartPoint="0,0" EndPoint="0,1">
+            <GradientStop Offset="0" Color="#FF56A1" />
+            <GradientStop Offset="1" Color="#FF9350" />
+        </LinearGradientBrush>
+
+
+    </Window.Resources>
+    <busyIndicator:BusyMask 
+ x:Name="BusyIndicator"
+ BusyContent="Please wait..."
+ BusyContentMargin="10"
+ IsBusy="True"
+ Background="#D8FFFFFF"
+ IsBusyAtStartup="False" >
+        <StackPanel>
+
+        </StackPanel>
+         <Border Visibility="Collapsed" BorderThickness="2px" Margin="0" BorderBrush="#145DA0" CornerRadius="4" Background="#B1D4E0">
+       
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="20px"></ColumnDefinition>
+                    <ColumnDefinition Width="3*" MinWidth="150px"></ColumnDefinition>
+                    <ColumnDefinition Width="5*"></ColumnDefinition>
+                    <ColumnDefinition Width="20px"></ColumnDefinition>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto"></RowDefinition>
+                    <RowDefinition Height="auto"></RowDefinition>
+                    <RowDefinition Height="auto"></RowDefinition>
+                    <RowDefinition Height="auto"></RowDefinition>
+                    <RowDefinition Height="auto"></RowDefinition>
+                    <RowDefinition Height="auto"></RowDefinition>
+                    <RowDefinition Height="auto"></RowDefinition>
+                    <RowDefinition Height="auto"></RowDefinition>
+                    <RowDefinition Height="auto"></RowDefinition>
+                    <RowDefinition Height="10px"></RowDefinition>
+                </Grid.RowDefinitions>
+                
+                <Image Source="/Images/background.jpg" Grid.ColumnSpan="4" Opacity="0.1" Grid.RowSpan="11" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Grid.Column="0" Grid.Row="0"></Image>
+                <Label x:Name="head" FontSize="30" HorizontalAlignment="Center" Margin="0,10,0,10" Grid.ColumnSpan="2" Grid.Column="1" Grid.Row="2" Padding="7"  Style="{StaticResource LabelRegular}" FontFamily="Impact" >Auto Code Generator</Label>
+                <Label x:Name="serverType" Grid.Column="1" Grid.Row="3" Padding="7"  Style="{StaticResource LabelRegular}" Margin="0,0,0,28" Grid.RowSpan="2"  >Server Type</Label>
+                <ComboBox x:Name="cmbServerType" Grid.Column="2" Grid.Row="3" Background="#B1D4E0" Foreground="#0C2D48" VerticalAlignment="Center">
+                    <ComboBoxItem IsSelected="True" Background="#B1D4E0" Foreground="#0C2D48">Select Server</ComboBoxItem>
+                    <ComboBoxItem Background="#B1D4E0" Foreground="#0C2D48">SQL Server</ComboBoxItem>
+                    <ComboBoxItem Background="#B1D4E0" Foreground="#0C2D48">Postgray SQL</ComboBoxItem>
+                </ComboBox>
+                <Label x:Name="textBlock" Grid.Column="1"  Grid.Row="4" Padding="7"  Style="{StaticResource LabelRegular}"  >Server Name / IP</Label>
+                <TextBox x:Name="txtServerName" Grid.Row="4" VerticalAlignment="Center" Grid.Column="2"/>
+                <Label x:Name="textBlock1" Grid.Column="1" Grid.Row="4" Padding="7" Style="{StaticResource LabelRegular}" Margin="0,28,0,28" Grid.RowSpan="3"    >Database Name</Label>
+                
+                <TextBox x:Name="txtDatabaseName" Grid.Row="5" VerticalAlignment="Center" Grid.Column="2" ></TextBox>
+                <Label x:Name="textBlock2" Grid.Column="1" Grid.Row="6" Padding="7" Style="{StaticResource LabelRegular}"    >User Name</Label>
+                <TextBox Grid.Row="6" VerticalAlignment="Center" Grid.Column="2" x:Name="txtUserName"></TextBox>
+                <Label x:Name="textBlock3" Grid.Column="1" Grid.Row="6" Padding="7" Style="{StaticResource LabelRegular}" Margin="0,28,0,25" Grid.RowSpan="3"    >Password</Label>
+                <PasswordBox Grid.Row="7" VerticalAlignment="Center" Grid.Column="2" x:Name="txtPassword"></PasswordBox>
+                <Button x:Name="btnConnectServer" Grid.Column="2" Grid.Row="8" Style="{StaticResource ButtonRegular}" Grid.ColumnSpan="2" Margin="0,10,0,0" Click="btnConnectServer_Click"  >Connect</Button>
+                <Button x:Name="btnClose" Grid.Column="2" Grid.Row="8" Style="{StaticResource ButtonRegular}" Margin="120,10,0,0" Height="25" VerticalAlignment="Center" Click="btnClose_Click">Close</Button>
+            </Grid>
+
+    </Border>
+    </busyIndicator:BusyMask>
+</Window>
