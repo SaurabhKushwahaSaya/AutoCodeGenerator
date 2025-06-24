@@ -1,6 +1,6 @@
 ﻿using AutoCode.Presentation.Model;
+using log4net;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -12,6 +12,7 @@ namespace AutoCode.Presentation
 {
     public partial class FlutterForm : Window
     {
+        private static readonly ILog log = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         private string FormName { get; set; }
 
         private string controllerName;
@@ -20,21 +21,30 @@ namespace AutoCode.Presentation
         public List<string> FieldTypes { get; set; }
         public FlutterForm(List<string> flutterParamList)
         {
-            InitializeComponent();
-            if (flutterParamList.Count > 1)
+            try
             {
-                this.FormName = flutterParamList[0];
-                controllerName = FormName + "Controller";
-                listName = char.ToLower(FormName[0]) + FormName.Substring(1)+"List";
-                this.Fields = JsonConvert.DeserializeObject<ObservableCollection<FieldProperties>>(flutterParamList[1]);
-                setFieldValues();
-                dataGrid.ItemsSource = this.Fields;
-                this.FieldTypes = new List<string>
+                log.Info("Enter into Flutter Form.xaml file.");
+                InitializeComponent();
+                if (flutterParamList.Count > 1)
+                {
+                    this.FormName = flutterParamList[0];
+                    controllerName = FormName + "Controller";
+                    listName = char.ToLower(FormName[0]) + FormName.Substring(1) + "List";
+                    this.Fields = JsonConvert.DeserializeObject<ObservableCollection<FieldProperties>>(flutterParamList[1]);
+                    setFieldValues();
+                    dataGrid.ItemsSource = this.Fields;
+                    this.FieldTypes = new List<string>
                 {
                     "TextBox", "Dropdown", "RadioButton", "CheckBox", "Button", "Text", "Calendar", "Switch","Email","Number"
                 };
+                }
+                this.DataContext = this;
             }
-            this.DataContext = this;
+            catch (Exception ex)
+            {
+                log.Error("Exception : " + ex.Message);
+                MessageBox.Show(ex.Message);
+            }
         }
         private void btnClose_Click(object sender, RoutedEventArgs e)
         {
@@ -44,7 +54,7 @@ namespace AutoCode.Presentation
         {
             try
             {
-
+                log.Info("Clicked on Generate Button.");
                 if (formCheckBox.IsChecked == true)
                 {
                     txtBlockCode.Text = string.Empty;
@@ -85,6 +95,7 @@ namespace AutoCode.Presentation
             }
             catch (Exception ex)
             {
+                log.Error("Exception on Generate Button clicked : " + ex.Message);
                 MessageBox.Show(ex.Message);
             }
         }
