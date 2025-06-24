@@ -1,51 +1,50 @@
 ﻿using AutoCode.Presentation.Model;
+using log4net;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Linq;
-using System.Reflection.Emit;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
-using System.Xml.Linq;
 
 namespace AutoCode.Presentation
 {
     public partial class AngularForm : Window
     {
+        private static readonly ILog log = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         private string FormName { get; set; }
         //private string FormType { get; set; }
         private ObservableCollection<FieldProperties> Fields { get; set; }
         public List<string> FieldTypes { get; set; }
         public AngularForm(List<string> angularParamList)
         {
-            InitializeComponent();
-            if (angularParamList.Count > 1)
+            try
             {
-                this.FormName = angularParamList[0];
-                //this.FormType = angularParamList[1];
-                this.Fields = JsonConvert.DeserializeObject<ObservableCollection<FieldProperties>>(angularParamList[1]);
-                setFieldValues();
-                dataGrid.ItemsSource = this.Fields;
-                this.FieldTypes = new List<string>
+                log.Info("Enter on Angular Form.xaml file.");
+                InitializeComponent();
+                if (angularParamList.Count > 1)
+                {
+                    this.FormName = angularParamList[0];
+                    //this.FormType = angularParamList[1];
+                    this.Fields = JsonConvert.DeserializeObject<ObservableCollection<FieldProperties>>(angularParamList[1]);
+                    setFieldValues();
+                    dataGrid.ItemsSource = this.Fields;
+                    this.FieldTypes = new List<string>
                 {
                     "TextBox","Number","email","Dropdown", "RadioButton", "CheckBox", "Calendar"
                 };
-                //if (this.FormType != "2")
-                //    stackActions.Visibility = Visibility.Collapsed;
+                    //if (this.FormType != "2")
+                    //    stackActions.Visibility = Visibility.Collapsed;
+                }
+                this.DataContext = this;
             }
-            this.DataContext = this;
+            catch (Exception ex)
+            {
+                log.Error("Exception on Angular Controller: " + ex.Message);
+                MessageBox.Show(ex.Message);
+            }
         }
         private void btnClose_Click(object sender, RoutedEventArgs e)
         {
@@ -55,6 +54,7 @@ namespace AutoCode.Presentation
         {
             try
             {
+                log.Info("Clicked on Generate button of angular code.");
                 if (formCheckBox.IsChecked == true)
                 {
                     txtBlockCode.Text = string.Empty;
@@ -85,6 +85,7 @@ namespace AutoCode.Presentation
             }
             catch (Exception ex)
             {
+                log.Error("Exception on Angular Code generate butrton : " + ex.Message);
                 MessageBox.Show(ex.Message);
             }
         }
