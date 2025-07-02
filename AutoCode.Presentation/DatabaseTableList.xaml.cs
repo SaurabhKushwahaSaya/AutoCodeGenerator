@@ -156,7 +156,7 @@ namespace AutoCode.Presentation
             {
                 TableColumnList = new Dictionary<string, Tuple<string, bool, bool>>();
                 primaryKeyOfTable = string.Empty;
-
+                txtBlockCode.Clear();
                 if (cmbTable.SelectedValue == null || string.IsNullOrEmpty(cmbTable.SelectedValue.ToString().Trim()))
                 {
                     MessageBox.Show("Please Select Table.");
@@ -1533,6 +1533,9 @@ namespace AutoCode.Presentation
                     case "varbinary":
                     case "image":
                         return "byte[]";
+                    case "uuid":
+                        return $"Guid";
+                    
                     default:
                         throw new Exception($"Unsupported data type: {type}");
                 }
