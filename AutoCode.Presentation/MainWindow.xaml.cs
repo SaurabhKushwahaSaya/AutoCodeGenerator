@@ -5,6 +5,7 @@ using Npgsql;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Configuration;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Reflection.Emit;
@@ -29,6 +30,7 @@ namespace AutoCode.Presentation
     /// </summary>
     public partial class MainWindow : Window
     {
+        public int developmentType = Convert.ToInt32(ConfigurationManager.AppSettings["Development"]);
         public MainWindow()
         {
             InitializeComponent();
@@ -40,10 +42,21 @@ namespace AutoCode.Presentation
         {
             BusyIndicator.IsBusy = false;
             cmbServerType.SelectedIndex = 2;
-            txtDatabaseName.Text = "sayatesting";
-            txtPassword.Password = "duca$$0234";
-            txtServerName.Text = "saya-dev2.cq6nozddb1mr.us-west-2.rds.amazonaws.com";
-            txtUserName.Text = "SayaDev";
+
+            if (developmentType == 0)
+            {
+                txtDatabaseName.Text = "sayatesting";
+                txtPassword.Password = "duca$$0234";
+                txtServerName.Text = "saya-dev2.cq6nozddb1mr.us-west-2.rds.amazonaws.com";
+                txtUserName.Text = "SayaDev";
+            }
+            else
+            {
+                txtDatabaseName.Text = "";
+                txtPassword.Password = "";
+                txtServerName.Text = "";
+                txtUserName.Text = "";
+            }
         }
 
         private void btnClose_Click(object sender, RoutedEventArgs e)
