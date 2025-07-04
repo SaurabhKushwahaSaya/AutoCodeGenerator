@@ -10,6 +10,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web.UI.WebControls;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -246,6 +247,10 @@ namespace AutoCode.Presentation
                     {
                         txtBlockCode.Text = txtBlockCode.Text + GenerateSelectAllWithPaginationStoreProcedureCode();
                     }
+                    if (getList.IsChecked.Value)
+                    {
+                        txtBlockCode.Text = txtBlockCode.Text + GenerateListStoreProcedure();
+                    }
                 }
                 if (chkObjCode.IsChecked.Value)
                 {
@@ -274,6 +279,10 @@ namespace AutoCode.Presentation
                         txtBlockCode.Text = txtBlockCode.Text + GetPaginationModelCode();
                         txtBlockCode.Text = txtBlockCode.Text + GetPaginationDataListModelCode(tableName);
                         txtBlockCode.Text = txtBlockCode.Text + GenerateSelectAllRecordWithPagination();
+                    }
+                    if (getList.IsChecked.Value)
+                    {
+                        txtBlockCode.Text = txtBlockCode.Text + GenerateListCode();
                     }
                 }
             }
@@ -957,7 +966,130 @@ namespace AutoCode.Presentation
         }
 
 
+        private string GenerateListStoreProcedure()
+        {
+            try
+            {
+                StringBuilder classBuilder = new StringBuilder();
+                StringBuilder returnParams = new StringBuilder();
+                StringBuilder tableParams = new StringBuilder();
+                classBuilder.AppendLine("--------------------------------------------------------------- Start List's SP Code ----------------------------------------------------------------------");
+                if (SettingHelper.ConnectionType == Enum.ConnectionType.MicrosoftSQLServer)
+                {
+                    classBuilder.AppendLine($"USE [{SettingHelper.SqlConnectionStringBuilder.InitialCatalog}]");
+                    classBuilder.AppendLine($"CREATE PROCEDURE dbo.getAllData_{tableName.ToLower()}");
+                    classBuilder.Append($"AS\r\n" +
+                        $"BEGIN\r\n    " +
+                        $"SET NOCOUNT ON;");
+                    returnParams.AppendLine($"\nSELECT ");
+                    bool appendComma = false;
+                    for (int i = 0; i < TableColumnList.Count(); i++)
+                    {
+                        var item = TableColumnList.ElementAt(i);
+                        if (appendComma)
+                        {
+                            returnParams.Append(",");
+                        }
+                        appendComma = true;
+                        returnParams.Append($"{item.Key}");
+                    }
+                    returnParams.AppendLine($" From dbo.{tableName}");
+                    tableParams.AppendLine($"End;");
 
+                }
+                else if (SettingHelper.ConnectionType == Enum.ConnectionType.PostgreSQLServer)
+                {
+                    classBuilder.AppendLine($"CREATE OR REPLACE FUNCTION public.get_all_{tableName.ToLower()}()");
+                    returnParams.Append($"RETURNS TABLE(");
+                    tableParams.AppendLine($"SELECT ");
+                    bool isFirstRow = false;
+                    for (int i = 0; i < TableColumnList.Count(); i++)
+                    {
+                        var item = TableColumnList.ElementAt(i);
+                        if (isFirstRow == false)
+                        {
+                            returnParams.Append($" \n\"{item.Key.ToLower()}\" {item.Value.Item1}");
+                            tableParams.Append($"\"{tableName}\".\"{item.Key}\"");
+                            isFirstRow = true;
+                        }
+                        else
+                        {
+                            returnParams.Append(",");
+                            returnParams.Append($" \n\"{item.Key.ToLower()}\" {item.Value.Item1}");
+                            tableParams.Append(",");
+                            tableParams.Append($"\"{tableName}\".\"{item.Key}\"");
+                        }
+                    }
+                    returnParams.Append(")");
+
+
+                    returnParams.AppendLine($"\nLANGUAGE plpgsql");
+                    returnParams.AppendLine($"AS $function$");
+                    returnParams.AppendLine($"BEGIN");
+                    returnParams.AppendLine($"   RETURN QUERY");
+                    tableParams.AppendLine($" FROM public.\"{tableName}\";");
+                    tableParams.AppendLine($"END;\r\n$function$\r\n;");
+                }
+                tableParams.AppendLine("\n--------------------------------------------------------------- End List's SP Code ----------------------------------------------------------------------");
+
+                return classBuilder.ToString() + returnParams.ToString() + tableParams.ToString();
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        private string GenerateListCode()
+        {
+            try
+            {
+                StringBuilder classBuilder = new StringBuilder();
+                //StringBuilder listBuilder = new StringBuilder();
+                //StringBuilder extraBuilder = new StringBuilder();
+                classBuilder.AppendLine("--------------------------------------------------------------- Start List's Code ----------------------------------------------------------------------");
+                classBuilder.AppendLine($"public static List<{tableName}> GetAllData()");
+                classBuilder.AppendLine($"{{");
+                classBuilder.AppendLine($"            try\r\n            {{");
+                classBuilder.AppendLine($"                List<{tableName}> {tableName.ToLower()}List = new List<{tableName}>();");
+                if (SettingHelper.ConnectionType == Enum.ConnectionType.MicrosoftSQLServer)
+                {
+                    classBuilder.AppendLine($"                DataTable dt = PostgreSQLHandler.ExecuteDataTable(connectionString, \"dbo.getAllData_{tableName.ToLower()}\");");
+
+                    //classBuilder.AppendLine($"");
+                }
+                else if (SettingHelper.ConnectionType == Enum.ConnectionType.PostgreSQLServer)
+                {
+                    classBuilder.AppendLine($"                DataTable dt = PostgreSQLHandler.ExecuteDataTable(connectionString, \"public.get_all_{tableName.ToLower()}();\");");
+                }
+                classBuilder.AppendLine($"                if (dt.Rows.Count > 0)\r\n                {{");
+                classBuilder.AppendLine($"                    foreach (DataRow row in dt.Rows)\r\n                    {{");
+                classBuilder.AppendLine($"                        {tableName} {tableName.ToLower()}Data = new Testing\r\n                        {{");
+                for (int i = 0; i < TableColumnList.Count(); i++)
+                {
+                    var item = TableColumnList.ElementAt(i);
+                    classBuilder.AppendLine($"                            {item.Key} = row[\"{item.Key}\"],");
+                }
+                classBuilder.AppendLine($"                        }};");
+                classBuilder.AppendLine($"                        {tableName.ToLower()}List.Add({tableName.ToLower()}Data);");
+                classBuilder.AppendLine($"                    }}");
+                classBuilder.AppendLine($"                }}");
+                classBuilder.AppendLine($"                return {tableName.ToLower()}List;");
+                classBuilder.AppendLine($"            }}");
+                classBuilder.AppendLine($"            catch (Exception ex)\r\n            " +
+                    $"{{\r\n                " +
+                    $"throw ex;  " +
+                    $"\n             }}");
+                classBuilder.AppendLine($" }}");
+
+                classBuilder.AppendLine("--------------------------------------------------------------- End List's Code ----------------------------------------------------------------------");
+
+                return classBuilder.ToString();
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
 
         private string GenerateInsertRecordCode()
         {
@@ -1069,7 +1201,7 @@ namespace AutoCode.Presentation
             {
                 StringBuilder classBuilder = new StringBuilder();
                 classBuilder.AppendLine("--------------------------------------------------------------- Start Data List Model Code ----------------------------------------------------------------------");
-                classBuilder.AppendLine($"public class DataListModel : {tableName}"+ "\r\n{\r\n\tpublic long ROWNUM { get; set; }\r\n\tpublic long TotalCount { get; set; }\r\n}");
+                classBuilder.AppendLine($"public class DataListModel : {tableName}" + "\r\n{\r\n\tpublic long ROWNUM { get; set; }\r\n\tpublic long TotalCount { get; set; }\r\n}");
                 classBuilder.AppendLine("--------------------------------------------------------------- End Data List Model Code ----------------------------------------------------------------------");
                 return classBuilder.ToString();
             }
@@ -1102,11 +1234,11 @@ namespace AutoCode.Presentation
                 StringBuilder classBuilder = new StringBuilder();
                 classBuilder.AppendLine("--------------------------------------------------------------- Start Select Record By Id Code ----------------------------------------------------------------------");
                 string tableNameAsVariable = ConvertProperCaseStringToCamelCaseString(tableName);
-                classBuilder.AppendLine($"public {tableName} {tableName}SelectById ({GetColumnTypeForMSSql(TableColumnList.First(x => x.Key == primaryKeyOfTable).Value.Item1)} {primaryKeyOfTable})");
-                classBuilder.AppendLine("{\r\n\ttry\r\n\t{");
-                classBuilder.AppendLine($"\t\t{tableName} {ConvertProperCaseStringToCamelCaseString(tableName)} = null;");
                 if (SettingHelper.ConnectionType == Enum.ConnectionType.MicrosoftSQLServer)
                 {
+                    classBuilder.AppendLine($"public {tableName} {tableName}SelectById ({GetColumnTypeForMSSql(TableColumnList.First(x => x.Key == primaryKeyOfTable).Value.Item1)} {primaryKeyOfTable})");
+                    classBuilder.AppendLine("{\r\n\ttry\r\n\t{");
+                    classBuilder.AppendLine($"\t\t{tableName} {ConvertProperCaseStringToCamelCaseString(tableName)} = null;");
                     classBuilder.AppendLine($"");
                     classBuilder.AppendLine("List<SqlParameter> paramList = new List<SqlParameter>();");
                     classBuilder.AppendLine($"paramList.Add(new SqlParameter(@\"{primaryKeyOfTable}\", {tableNameAsVariable}.{primaryKeyOfTable}));");
@@ -1127,6 +1259,9 @@ namespace AutoCode.Presentation
                 }
                 else if (SettingHelper.ConnectionType == Enum.ConnectionType.PostgreSQLServer)
                 {
+                    classBuilder.AppendLine($"public {tableName} {tableName}SelectById ({GetColumnTypeForPostgreSql(TableColumnList.First(x => x.Key == primaryKeyOfTable).Value.Item1)} {primaryKeyOfTable})");
+                    classBuilder.AppendLine("{\r\n\ttry\r\n\t{");
+                    classBuilder.AppendLine($"\t\t{tableName} {ConvertProperCaseStringToCamelCaseString(tableName)} = null;");
                     classBuilder.AppendLine("\t\tList<NpgsqlParameter> paramList = new List<NpgsqlParameter>();");
                     classBuilder.AppendLine($"\t\tparamList.Add(new NpgsqlParameter(@\"{primaryKeyOfTable.ToLower()}\", {tableNameAsVariable}.{primaryKeyOfTable}));");
                     classBuilder.AppendLine($"\t\t{ConvertProperCaseStringToCamelCaseString(tableName)} = PostgreSQLHandler.ExecuteAsObject<{tableName}>(\"{tableName.ToLower()}_select_by_id\", paramList);");
@@ -1228,19 +1363,19 @@ namespace AutoCode.Presentation
                     case "int":
                     case "bigint":
                         return $"@{columnName} {type} = 0";
-                        //break;
+                    //break;
                     case "varchar":
                     case "nvarchar":
                     case "text":
                     case "ntext":
                         return $"@{columnName} {type} = ''";
-                        //break;
+                    //break;
                     case "datetime":
                     case "smalldatetime":
                     case "date":
                     case "time":
                         return $"@{columnName} {type} = null";
-                        //break;
+                    //break;
                     default:
                         throw new Exception("New Type Found For SQL Parameter");
                         //break;
@@ -1263,11 +1398,11 @@ namespace AutoCode.Presentation
                         if (isNullable)
                         {
                             classBuilder.AppendLine($"if (string.IsNullOrEmpty(dr[\"{columnName}\"].ToString().Trim()))\r\n{tableVariableName}.{columnName} = null;");
-                            classBuilder.AppendLine($"else \r\n {tableVariableName}.{columnName} = Convert.ToInt32(dr[\"{ columnName}\"].ToString());");
+                            classBuilder.AppendLine($"else \r\n {tableVariableName}.{columnName} = Convert.ToInt32(dr[\"{columnName}\"].ToString());");
                         }
                         else
                         {
-                            classBuilder.AppendLine($"{tableVariableName}.{columnName} = Convert.ToInt32(dr[\"{ columnName}\"].ToString());");
+                            classBuilder.AppendLine($"{tableVariableName}.{columnName} = Convert.ToInt32(dr[\"{columnName}\"].ToString());");
                         }
                         break;
                     case "bigint":
@@ -1275,88 +1410,88 @@ namespace AutoCode.Presentation
                         if (isNullable)
                         {
                             classBuilder.AppendLine($"if (string.IsNullOrEmpty(dr[\"{columnName}\"].ToString().Trim()))\r\n{tableVariableName}.{columnName} = null;");
-                            classBuilder.AppendLine($"else \r\n {tableVariableName}.{columnName} = Convert.ToInt64(dr[\"{ columnName}\"].ToString());");
+                            classBuilder.AppendLine($"else \r\n {tableVariableName}.{columnName} = Convert.ToInt64(dr[\"{columnName}\"].ToString());");
                         }
                         else
                         {
-                            classBuilder.AppendLine($"{tableVariableName}.{columnName} = Convert.ToInt64(dr[\"{ columnName}\"].ToString());");
+                            classBuilder.AppendLine($"{tableVariableName}.{columnName} = Convert.ToInt64(dr[\"{columnName}\"].ToString());");
                         }
                         break;
                     case "smallint":
                         if (isNullable)
                         {
                             classBuilder.AppendLine($"if (string.IsNullOrEmpty(dr[\"{columnName}\"].ToString().Trim()))\r\n{tableVariableName}.{columnName} = null;");
-                            classBuilder.AppendLine($"else \r\n {tableVariableName}.{columnName} = Convert.ToInt16(dr[\"{ columnName}\"].ToString());");
+                            classBuilder.AppendLine($"else \r\n {tableVariableName}.{columnName} = Convert.ToInt16(dr[\"{columnName}\"].ToString());");
                         }
                         else
                         {
-                            classBuilder.AppendLine($"{tableVariableName}.{columnName} = Convert.ToInt16(dr[\"{ columnName}\"].ToString());");
+                            classBuilder.AppendLine($"{tableVariableName}.{columnName} = Convert.ToInt16(dr[\"{columnName}\"].ToString());");
                         }
                         break;
                     case "tinyint":
                         if (isNullable)
                         {
                             classBuilder.AppendLine($"if (string.IsNullOrEmpty(dr[\"{columnName}\"].ToString().Trim()))\r\n{tableVariableName}.{columnName} = null;");
-                            classBuilder.AppendLine($"else \r\n {tableVariableName}.{columnName} = Convert.ToByte(dr[\"{ columnName}\"].ToString());");
+                            classBuilder.AppendLine($"else \r\n {tableVariableName}.{columnName} = Convert.ToByte(dr[\"{columnName}\"].ToString());");
                         }
                         else
                         {
-                            classBuilder.AppendLine($"{tableVariableName}.{columnName} = Convert.ToByte(dr[\"{ columnName}\"].ToString());");
+                            classBuilder.AppendLine($"{tableVariableName}.{columnName} = Convert.ToByte(dr[\"{columnName}\"].ToString());");
                         }
                         break;
                     case "bit":
                         if (isNullable)
                         {
                             classBuilder.AppendLine($"if (string.IsNullOrEmpty(dr[\"{columnName}\"].ToString().Trim()))\r\n{tableVariableName}.{columnName} = null;");
-                            classBuilder.AppendLine($"else \r\n {tableVariableName}.{columnName} = Convert.ToBoolean(dr[\"{ columnName}\"].ToString());");
+                            classBuilder.AppendLine($"else \r\n {tableVariableName}.{columnName} = Convert.ToBoolean(dr[\"{columnName}\"].ToString());");
                         }
                         else
                         {
-                            classBuilder.AppendLine($"{tableVariableName}.{columnName} = Convert.ToBoolean(dr[\"{ columnName}\"].ToString());");
+                            classBuilder.AppendLine($"{tableVariableName}.{columnName} = Convert.ToBoolean(dr[\"{columnName}\"].ToString());");
                         }
                         break;
                     case "boolean":
                         if (isNullable)
                         {
                             classBuilder.AppendLine($"if (string.IsNullOrEmpty(dr[\"{columnName}\"].ToString().Trim()))\r\n{tableVariableName}.{columnName} = null;");
-                            classBuilder.AppendLine($"else \r\n {tableVariableName}.{columnName} = Convert.ToBoolean(dr[\"{ columnName}\"].ToString());");
+                            classBuilder.AppendLine($"else \r\n {tableVariableName}.{columnName} = Convert.ToBoolean(dr[\"{columnName}\"].ToString());");
                         }
                         else
                         {
-                            classBuilder.AppendLine($"{tableVariableName}.{columnName} = Convert.ToBoolean(dr[\"{ columnName}\"].ToString());");
+                            classBuilder.AppendLine($"{tableVariableName}.{columnName} = Convert.ToBoolean(dr[\"{columnName}\"].ToString());");
                         }
                         break;
                     case "bool":
                         if (isNullable)
                         {
                             classBuilder.AppendLine($"if (string.IsNullOrEmpty(dr[\"{columnName}\"].ToString().Trim()))\r\n{tableVariableName}.{columnName} = null;");
-                            classBuilder.AppendLine($"else \r\n {tableVariableName}.{columnName} = Convert.ToBoolean(dr[\"{ columnName}\"].ToString());");
+                            classBuilder.AppendLine($"else \r\n {tableVariableName}.{columnName} = Convert.ToBoolean(dr[\"{columnName}\"].ToString());");
                         }
                         else
                         {
-                            classBuilder.AppendLine($"{tableVariableName}.{columnName} = Convert.ToBoolean(dr[\"{ columnName}\"].ToString());");
+                            classBuilder.AppendLine($"{tableVariableName}.{columnName} = Convert.ToBoolean(dr[\"{columnName}\"].ToString());");
                         }
                         break;
                     case "float":
                         if (isNullable)
                         {
                             classBuilder.AppendLine($"if (string.IsNullOrEmpty(dr[\"{columnName}\"].ToString().Trim()))\r\n{tableVariableName}.{columnName} = null;");
-                            classBuilder.AppendLine($"else \r\n {tableVariableName}.{columnName} = Convert.ToDouble(dr[\"{ columnName}\"].ToString());");
+                            classBuilder.AppendLine($"else \r\n {tableVariableName}.{columnName} = Convert.ToDouble(dr[\"{columnName}\"].ToString());");
                         }
                         else
                         {
-                            classBuilder.AppendLine($"{tableVariableName}.{columnName} = Convert.ToDouble(dr[\"{ columnName}\"].ToString());");
+                            classBuilder.AppendLine($"{tableVariableName}.{columnName} = Convert.ToDouble(dr[\"{columnName}\"].ToString());");
                         }
                         break;
                     case "real":
                         if (isNullable)
                         {
                             classBuilder.AppendLine($"if (string.IsNullOrEmpty(dr[\"{columnName}\"].ToString().Trim()))\r\n{tableVariableName}.{columnName} = null;");
-                            classBuilder.AppendLine($"else \r\n {tableVariableName}.{columnName} = (float) Convert.ToDouble(dr[\"{ columnName}\"].ToString());");
+                            classBuilder.AppendLine($"else \r\n {tableVariableName}.{columnName} = (float) Convert.ToDouble(dr[\"{columnName}\"].ToString());");
                         }
                         else
                         {
-                            classBuilder.AppendLine($"{tableVariableName}.{columnName} = (float) Convert.ToDouble(dr[\"{ columnName}\"].ToString());");
+                            classBuilder.AppendLine($"{tableVariableName}.{columnName} = (float) Convert.ToDouble(dr[\"{columnName}\"].ToString());");
                         }
                         break;
                     case "money":
@@ -1370,7 +1505,7 @@ namespace AutoCode.Presentation
                         }
                         else
                         {
-                            classBuilder.AppendLine($"{tableVariableName}.{columnName} = (float) Convert.ToDecimal(dr[\"{ columnName}\"].ToString());");
+                            classBuilder.AppendLine($"{tableVariableName}.{columnName} = (float) Convert.ToDecimal(dr[\"{columnName}\"].ToString());");
                         }
                         break;
                     case "varchar":
@@ -1393,7 +1528,7 @@ namespace AutoCode.Presentation
                         }
                         else
                         {
-                            classBuilder.AppendLine($"{tableVariableName}.{columnName} = (float) Convert.ToDateTime(dr[\"{ columnName}\"].ToString());");
+                            classBuilder.AppendLine($"{tableVariableName}.{columnName} = (float) Convert.ToDateTime(dr[\"{columnName}\"].ToString());");
                         }
                         break;
                     case "timestamp without time zone":
@@ -1404,7 +1539,7 @@ namespace AutoCode.Presentation
                         }
                         else
                         {
-                            classBuilder.AppendLine($"{tableVariableName}.{columnName} = (float) Convert.ToDateTime(dr[\"{ columnName}\"].ToString());");
+                            classBuilder.AppendLine($"{tableVariableName}.{columnName} = (float) Convert.ToDateTime(dr[\"{columnName}\"].ToString());");
                         }
                         break;
                     case "timestamp with time zone":
@@ -1415,7 +1550,7 @@ namespace AutoCode.Presentation
                         }
                         else
                         {
-                            classBuilder.AppendLine($"{tableVariableName}.{columnName} = (float) Convert.ToDateTime(dr[\"{ columnName}\"].ToString());");
+                            classBuilder.AppendLine($"{tableVariableName}.{columnName} = (float) Convert.ToDateTime(dr[\"{columnName}\"].ToString());");
                         }
                         break;
                     case "timestamptz":
@@ -1426,7 +1561,7 @@ namespace AutoCode.Presentation
                         }
                         else
                         {
-                            classBuilder.AppendLine($"{tableVariableName}.{columnName} = (float) Convert.ToDateTime(dr[\"{ columnName}\"].ToString());");
+                            classBuilder.AppendLine($"{tableVariableName}.{columnName} = (float) Convert.ToDateTime(dr[\"{columnName}\"].ToString());");
                         }
                         break;
                     case "binary":
@@ -1529,13 +1664,15 @@ namespace AutoCode.Presentation
                     case "date":
                     case "time":
                         return "DateTime";
+                    case "timestamp":
+                        return "DateTime";
                     case "binary":
                     case "varbinary":
                     case "image":
                         return "byte[]";
-                    case "uuid":
-                        return $"Guid";
-                    
+                    case "uniqueidentifier":
+                        return "Guid";
+
                     default:
                         throw new Exception($"Unsupported data type: {type}");
                 }
@@ -1625,4 +1762,8 @@ namespace AutoCode.Presentation
         public string DataType { set; get; }
         public string IsNullable { set; get; }
     }
+
+
+   
+
 }

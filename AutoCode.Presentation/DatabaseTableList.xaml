@@ -41,31 +41,32 @@
                         <ColumnDefinition Width="4*"></ColumnDefinition>
                         <ColumnDefinition Width="1*"></ColumnDefinition>
                     </Grid.ColumnDefinitions>
+                    <!--Table's DropDown-->
                     <StackPanel Orientation="Horizontal" Grid.Column="0">
                         <Label x:Name="serverType" Grid.Column="1" Grid.Row="3" Padding="7"  Style="{StaticResource LabelRegular}" Margin="0,0,0,0" Grid.RowSpan="2"  >Select Table:</Label>
                         <ComboBox x:Name="cmbTable" Grid.Column="2" Style="{StaticResource ComboBoxRegular}" Width="170" Margin="0" Grid.Row="3" VerticalAlignment="Center" >
                         </ComboBox>
                     </StackPanel>
+                    <!--Check Box for Select object-->
                     <StackPanel Orientation="Horizontal" Grid.Column="1" VerticalAlignment="Top">
                         <Label Margin="15,0,0,0" x:Name="type" Grid.Column="1" Grid.Row="3" Padding="7"  Style="{StaticResource LabelRegular}" Grid.RowSpan="2"  >Select Object:</Label>
                         <CheckBox x:Name="chkObjModel" VerticalAlignment="Center" Style="{StaticResource CheckBoxRegular}">Model</CheckBox>
                         <CheckBox x:Name="chkObjSP" VerticalAlignment="Center"  Style="{StaticResource CheckBoxRegular}">Store Procedure</CheckBox>
                         <CheckBox  x:Name="chkObjCode" VerticalAlignment="Center"  Style="{StaticResource CheckBoxRegular}">Code</CheckBox>
                     </StackPanel>
+                    <!--Check Box for Select Crud-->
                     <StackPanel Orientation="Horizontal"  Grid.Column="2" VerticalAlignment="Top">
-
-
                         <Label Margin="10,0,0,0" x:Name="crudtype" Grid.Column="1" Grid.Row="3" Padding="7"  Style="{StaticResource LabelRegular}" Grid.RowSpan="2"  >Select CRUD:</Label>
                         <CheckBox x:Name="chkCRUDInsert" VerticalAlignment="Center"  Style="{StaticResource CheckBoxRegular}">Insert</CheckBox>
                         <CheckBox x:Name="chkCRUDUpdate" VerticalAlignment="Center"  Style="{StaticResource CheckBoxRegular}">Update</CheckBox>
                         <CheckBox x:Name="chkCRUDHardDeleteById" VerticalAlignment="Center"  Style="{StaticResource CheckBoxRegular}">Hard Delete By Id</CheckBox>
                         <CheckBox x:Name="chkCRUDSoftDeleteById" VerticalAlignment="Center"  Style="{StaticResource CheckBoxRegular}">Soft Delete By Id</CheckBox>
                         <CheckBox x:Name="chkCRUDSelectById" VerticalAlignment="Center"  Style="{StaticResource CheckBoxRegular}">Select By Id</CheckBox>
+                        <CheckBox x:Name="getList" VerticalAlignment="Center"  Style="{StaticResource CheckBoxRegular}">List</CheckBox>
                         <CheckBox x:Name="chkCRUDSelectAll" VerticalAlignment="Center"  Style="{StaticResource CheckBoxRegular}">Select all</CheckBox>
-
                     </StackPanel>
+                    <!--Generate Button-->
                     <Button x:Name="btnGenerate"  HorizontalAlignment="Right"    Grid.Column="3" Height="30px" ToolTip="Close" Grid.Row="1" Padding="7"  Style="{StaticResource ButtonRegular}" Click="btnGenerate_Click"  >Generate</Button>
-
                 </Grid>
                     <TextBox x:Name="txtBlockCode" Style="{StaticResource TextBoxRegular}" TextWrapping="WrapWithOverflow" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" IsReadOnly="True" Grid.Row="3" Grid.RowSpan="2" Grid.ColumnSpan="2" Grid.Column="1" Margin="10" ></TextBox>
             </Grid>
