@@ -1,6 +1,6 @@
 ﻿using AutoCode.Presentation.Model;
+using log4net;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -12,29 +12,38 @@ namespace AutoCode.Presentation
 {
     public partial class FlutterForm : Window
     {
+        private static readonly ILog log = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         private string FormName { get; set; }
-
         private string controllerName;
         string listName;
         private ObservableCollection<FieldProperties> Fields { get; set; }
         public List<string> FieldTypes { get; set; }
         public FlutterForm(List<string> flutterParamList)
         {
-            InitializeComponent();
-            if (flutterParamList.Count > 1)
+            try
             {
-                this.FormName = flutterParamList[0];
-                controllerName = FormName + "Controller";
-                listName = char.ToLower(FormName[0]) + FormName.Substring(1)+"List";
-                this.Fields = JsonConvert.DeserializeObject<ObservableCollection<FieldProperties>>(flutterParamList[1]);
-                setFieldValues();
-                dataGrid.ItemsSource = this.Fields;
-                this.FieldTypes = new List<string>
+                log.Info("Enter into Flutter Form.xaml file.");
+                InitializeComponent();
+                if (flutterParamList.Count > 1)
+                {
+                    this.FormName = flutterParamList[0];
+                    controllerName = FormName + "Controller";
+                    listName = char.ToLower(FormName[0]) + FormName.Substring(1) + "List";
+                    this.Fields = JsonConvert.DeserializeObject<ObservableCollection<FieldProperties>>(flutterParamList[1]);
+                    setFieldValues();
+                    dataGrid.ItemsSource = this.Fields;
+                    this.FieldTypes = new List<string>
                 {
                     "TextBox", "Dropdown", "RadioButton", "CheckBox", "Button", "Text", "Calendar", "Switch","Email","Number"
                 };
+                }
+                this.DataContext = this;
             }
-            this.DataContext = this;
+            catch (Exception ex)
+            {
+                log.Error("Exception : " + ex.Message);
+                MessageBox.Show(ex.Message);
+            }
         }
         private void btnClose_Click(object sender, RoutedEventArgs e)
         {
@@ -44,7 +53,7 @@ namespace AutoCode.Presentation
         {
             try
             {
-
+                log.Info("Clicked on Generate Button.");
                 if (formCheckBox.IsChecked == true)
                 {
                     txtBlockCode.Text = string.Empty;
@@ -55,9 +64,6 @@ namespace AutoCode.Presentation
                 {
                     txtBlockListCode.Text = string.Empty;
                     //create list
-                    //if ((bool)chkModelCode.IsChecked)
-                    //    txtBlockListCode.Text += generateListModel();
-                    //if ((bool)chkUICode.IsChecked)
                         txtBlockListCode.Text += generateListUI();
                 }
                 if (notificationCheckBox.IsChecked == true)
@@ -66,25 +72,10 @@ namespace AutoCode.Presentation
                     //create notification
                     txtBlockCode.Text += generateNotification();
                 }
-
-                //if (this.FormType == "1")
-                //{
-                //    txtBlockCode.Text = string.Empty;
-                //    //create form
-                //    txtBlockCode.Text = generateForm();
-                //}
-                //else if (this.FormType == "2")
-                //{
-                //    txtBlockListCode.Text = string.Empty;
-                //    //create list
-                //    if ((bool)chkModelCode.IsChecked)
-                //        txtBlockListCode.Text += generateListModel();
-                //    if ((bool)chkUICode.IsChecked)
-                //        txtBlockListCode.Text += generateListUI();
-                //}
             }
             catch (Exception ex)
             {
+                log.Error("Exception on Generate Button clicked : " + ex.Message);
                 MessageBox.Show(ex.Message);
             }
         }
@@ -99,10 +90,6 @@ namespace AutoCode.Presentation
                     || field.Type.IndexOf("float", StringComparison.OrdinalIgnoreCase) >= 0
                     || field.Type.IndexOf("double", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
-                    //if (this.FormType == "2")
-                    //    field.FieldType = "Text";
-                    //else
-                    //    field.FieldType = "TextBox";
                     field.FieldType = "TextBox";
                 }
                 else if (field.Type.IndexOf("bool", StringComparison.OrdinalIgnoreCase) >= 0)
@@ -116,7 +103,6 @@ namespace AutoCode.Presentation
                     field.FieldType = "TextBox";
                 if (field.Name.IndexOf("email", StringComparison.OrdinalIgnoreCase) >= 0)
                     field.FieldType = "Email";
-                //field.Label = field.Name;
             }
         }
         private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -161,278 +147,7 @@ namespace AutoCode.Presentation
         }
         private string generateListUI()
         {
-            //list generated by sir
-            try
-            {
-            //    StringBuilder list = new StringBuilder();
-            //    list.AppendLine("--------------------------------- Start List Code -----------------------------------\n\n");
-            //    list.AppendLine("Widget build(BuildContext context) {");
-            //    list.AppendLine("  return Scaffold(");
-            //    list.AppendLine("    appBar: AppBar(");
-            //    list.AppendLine("      title: const Text(");
-            //    list.AppendLine($"        '{this.FormName} List',");
-            //    list.AppendLine("      style: TextStyle(");
-            //    list.AppendLine("        fontSize: 14.0,");
-            //    list.AppendLine("        color: Colors.blue,");
-            //    list.AppendLine("      ),\r\n    ),\r\n  ),");
-            //    list.AppendLine("    body: ListView.builder(");
-            //    list.AppendLine("      controller: scrollController,");
-            //    list.AppendLine($"      itemCount: {this.FormName}ListData.length,");
-            //    list.AppendLine("      shrinkWrap: true,");
-            //    list.AppendLine("      physics: const AlwaysScrollableScrollPhysics(),");
-            //    list.AppendLine("      itemBuilder: (context, index) {");
-            //    if ((bool)chkAllowPagination.IsChecked)
-            //    {
-            //        list.Append($"        if (index < {this.FormName}ListData.length) ");
-            //        list.AppendLine("{");
-            //    }
-            //    list.AppendLine("          return Padding(");
-            //    list.AppendLine("            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),");
-            //    list.AppendLine("            child: Container(");
-            //    list.AppendLine("              decoration: BoxDecoration(");
-            //    list.AppendLine("                  borderRadius: BorderRadius.circular(15),");
-            //    list.AppendLine("                  color: Colors.white),");
-            //    list.AppendLine("              padding:");
-            //    list.AppendLine("                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),");
-            //    list.AppendLine("              child: Column(");
-            //    list.AppendLine("                crossAxisAlignment: CrossAxisAlignment.start,");
-            //    list.AppendLine("                children: [");
-
-            //    foreach (var field in this.Fields)
-            //    {
-            //        if (field.FieldType == "TextBox")
-            //        {
-            //            list.AppendLine("                  const SizedBox(height: 10),");
-            //            list.AppendLine("                  Row(");
-            //            list.AppendLine("                    children: [");
-            //            list.AppendLine("                      const Text(");
-            //            list.AppendLine($"                        '{field.Label}',");
-            //            list.AppendLine("                        style: TextStyle(");
-            //            list.AppendLine("                            fontStyle: FontStyle.normal,");
-            //            list.AppendLine("                            color: Colors.blue,");
-            //            list.AppendLine("                            fontSize: 14,");
-            //            list.AppendLine("                            fontWeight: FontWeight.bold),");
-            //            list.AppendLine("                        maxLines: 1,");
-            //            list.AppendLine("                      ),");
-            //            list.AppendLine("                        Expanded(");
-            //            list.AppendLine("                          child: Text(");
-            //            list.AppendLine($"                            {this.FormName}ListData[index].{field.Name}.toString(),");
-            //            list.AppendLine("                            style: const TextStyle(");
-            //            list.AppendLine("                                fontStyle: FontStyle.normal,");
-            //            list.AppendLine("                                color: Colors.blue,");
-            //            list.AppendLine("                                fontSize: 14,");
-            //            list.AppendLine("                                fontWeight: FontWeight.normal),");
-            //            list.AppendLine("                            maxLines: 1,");
-            //            list.AppendLine("                          ),");
-            //            list.AppendLine("                        ),");
-            //            list.AppendLine("                      ],");
-            //            list.AppendLine("                    ),");
-            //        }
-            //        else if (field.FieldType == "Text")
-            //        {
-            //            list.AppendLine("                  const SizedBox(height: 10),");
-            //            list.AppendLine("                  Row(");
-            //            list.AppendLine("                    children: [");
-            //            list.AppendLine("                      const Text(");
-            //            list.AppendLine($"                        '{field.Label}',");
-            //            list.AppendLine("                        style: TextStyle(");
-            //            list.AppendLine("                            fontStyle: FontStyle.normal,");
-            //            list.AppendLine("                            color: Colors.blue,");
-            //            list.AppendLine("                            fontSize: 14,");
-            //            list.AppendLine("                            fontWeight: FontWeight.bold),");
-            //            list.AppendLine("                        maxLines: 1,");
-            //            list.AppendLine("                      ),");
-            //            list.AppendLine("                        Expanded(");
-            //            list.AppendLine("                          child: Text(");
-            //            list.AppendLine($"                            {this.FormName}ListData[index].{field.Name}.toString(),");
-            //            list.AppendLine("                            style: const TextStyle(");
-            //            list.AppendLine("                                fontStyle: FontStyle.normal,");
-            //            list.AppendLine("                                color: Colors.blue,");
-            //            list.AppendLine("                                fontSize: 14,");
-            //            list.AppendLine("                                fontWeight: FontWeight.normal),");
-            //            list.AppendLine("                            maxLines: 1,");
-            //            list.AppendLine("                          ),");
-            //            list.AppendLine("                        ),");
-            //            list.AppendLine("                      ],");
-            //            list.AppendLine("                    ),");
-            //        }
-            //        else if (field.FieldType == "Switch")
-            //        {
-            //            list.AppendLine("                  SizedBox(");
-            //            list.AppendLine("                    height: 20,");
-            //            list.AppendLine("                    child: Row(");
-            //            list.AppendLine("                      mainAxisAlignment: MainAxisAlignment.spaceBetween,");
-            //            list.AppendLine("                      children: [");
-            //            list.AppendLine("                        Transform.scale(");
-            //            list.AppendLine("                          scale: 1.0,");
-            //            list.AppendLine("                          child: Switch(");
-            //            list.AppendLine("                            thumbIcon: WidgetStatePropertyAll(Icon(");
-            //            list.AppendLine("                              Icons.circle,");
-            //            list.AppendLine("                              size: 30,");
-            //            list.AppendLine($"                              color: {this.FormName}ListData[index].{field.Name}");
-            //            list.AppendLine("                                  ? Colors.green");
-            //            list.AppendLine("                                  : Colors.red,");
-            //            list.AppendLine("                            )),");
-            //            list.AppendLine($"                            value: {this.FormName}ListData[index].{field.Name},");
-            //            list.AppendLine("                            onChanged: ((value) {");
-            //            list.AppendLine("                              // display pop up alert");
-            //            list.AppendLine("                            }),");
-            //            list.AppendLine("                            activeTrackColor: Colors.grey,");
-            //            list.AppendLine("                            trackOutlineColor:");
-            //            list.AppendLine("                                const WidgetStatePropertyAll(Colors.grey),");
-            //            list.AppendLine("                            inactiveTrackColor: Colors.grey,");
-            //            list.AppendLine("                          ),");
-            //            list.AppendLine("                        ),");
-            //            list.AppendLine("                      ],");
-            //            list.AppendLine("                    ),");
-            //            list.AppendLine("                  ),");
-            //        }
-            //        else if (field.FieldType == "Button")
-            //        {
-            //            list.AppendLine("                  const SizedBox(height: 10),");
-            //            list.AppendLine("                  Container(");
-            //            list.AppendLine("                        height: 40,");
-            //            list.AppendLine("                        padding: const EdgeInsets.symmetric(horizontal: 16),");
-            //            list.AppendLine("                        decoration: BoxDecoration(");
-            //            list.AppendLine("                          borderRadius: BorderRadius.circular(15),");
-            //            list.AppendLine("                        ),");
-            //            list.AppendLine("                        clipBehavior: Clip.antiAlias,");
-            //            list.AppendLine("                        child: ElevatedButton(");
-            //            list.AppendLine("                          style: ButtonStyle(");
-            //            list.AppendLine("                            shape: const WidgetStatePropertyAll(");
-            //            list.AppendLine("                              RoundedRectangleBorder(");
-            //            list.AppendLine("                                borderRadius: BorderRadius.all(");
-            //            list.AppendLine("                                  Radius.circular(5),");
-            //            list.AppendLine("                                ),");
-            //            list.AppendLine("                              ),");
-            //            list.AppendLine("                            ),");
-            //            list.AppendLine("                            backgroundColor: WidgetStateProperty.all(");
-            //            list.AppendLine("                              Colors.blue,");
-            //            list.AppendLine("                            ),");
-            //            list.AppendLine("                          ),");
-            //            list.AppendLine("                          onPressed: () async {");
-            //            list.AppendLine("                            // API call");
-            //            list.AppendLine("                          },");
-            //            list.AppendLine("                          child: const Text(");
-            //            list.AppendLine($"                            '{field.Label}',");
-            //            list.AppendLine("                            style: TextStyle(");
-            //            list.AppendLine("                              color: Colors.white,");
-            //            list.AppendLine("                              fontSize: 14.0,");
-            //            list.AppendLine("                            ),");
-            //            list.AppendLine("                          ),");
-            //            list.AppendLine("                        ),");
-            //            list.AppendLine("                      ),");
-            //        }
-            //    }
-
-            //    //EditCheck
-            //    if ((bool)chkAllowEdit.IsChecked)
-            //    {
-            //        list.AppendLine("                  // Edit Data Button");
-            //        list.AppendLine("                  const SizedBox(height: 10),");
-            //        list.AppendLine("                  Container(");
-            //        list.AppendLine("                        height: 40,");
-            //        list.AppendLine("                        padding: const EdgeInsets.symmetric(horizontal: 16),");
-            //        list.AppendLine("                        decoration: BoxDecoration(");
-            //        list.AppendLine("                          borderRadius: BorderRadius.circular(15),");
-            //        list.AppendLine("                        ),");
-            //        list.AppendLine("                        clipBehavior: Clip.antiAlias,");
-            //        list.AppendLine("                        child: ElevatedButton(");
-            //        list.AppendLine("                          style: ButtonStyle(");
-            //        list.AppendLine("                            shape: const WidgetStatePropertyAll(");
-            //        list.AppendLine("                              RoundedRectangleBorder(");
-            //        list.AppendLine("                                borderRadius: BorderRadius.all(");
-            //        list.AppendLine("                                  Radius.circular(5),");
-            //        list.AppendLine("                                ),");
-            //        list.AppendLine("                              ),");
-            //        list.AppendLine("                            ),");
-            //        list.AppendLine("                            backgroundColor: WidgetStateProperty.all(");
-            //        list.AppendLine("                              Colors.blue,");
-            //        list.AppendLine("                            ),");
-            //        list.AppendLine("                          ),");
-            //        list.AppendLine("                          onPressed: () async {");
-            //        list.AppendLine("                            // do work");
-            //        list.AppendLine("                          },");
-            //        list.AppendLine("                          child: const Text(");
-            //        list.AppendLine($"                            'Edit',");
-            //        list.AppendLine("                            style: TextStyle(");
-            //        list.AppendLine("                              color: Colors.white,");
-            //        list.AppendLine("                              fontSize: 14.0,");
-            //        list.AppendLine("                            ),");
-            //        list.AppendLine("                          ),");
-            //        list.AppendLine("                        ),");
-            //        list.AppendLine("                      ),");
-            //    }
-
-            //    //deleteCheck
-            //    if ((bool)chkAllowDelete.IsChecked)
-            //    {
-            //        list.AppendLine("                  // Delete Data Button");
-            //        list.AppendLine("                  const SizedBox(height: 10),");
-            //        list.AppendLine("                  Container(");
-            //        list.AppendLine("                        height: 40,");
-            //        list.AppendLine("                        padding: const EdgeInsets.symmetric(horizontal: 16),");
-            //        list.AppendLine("                        decoration: BoxDecoration(");
-            //        list.AppendLine("                          borderRadius: BorderRadius.circular(15),");
-            //        list.AppendLine("                        ),");
-            //        list.AppendLine("                        clipBehavior: Clip.antiAlias,");
-            //        list.AppendLine("                        child: ElevatedButton(");
-            //        list.AppendLine("                          style: ButtonStyle(");
-            //        list.AppendLine("                            shape: const WidgetStatePropertyAll(");
-            //        list.AppendLine("                              RoundedRectangleBorder(");
-            //        list.AppendLine("                                borderRadius: BorderRadius.all(");
-            //        list.AppendLine("                                  Radius.circular(5),");
-            //        list.AppendLine("                                ),");
-            //        list.AppendLine("                              ),");
-            //        list.AppendLine("                            ),");
-            //        list.AppendLine("                            backgroundColor: WidgetStateProperty.all(");
-            //        list.AppendLine("                              Colors.blue,");
-            //        list.AppendLine("                            ),");
-            //        list.AppendLine("                          ),");
-            //        list.AppendLine("                          onPressed: () async {");
-            //        list.AppendLine("                            // do work");
-            //        list.AppendLine("                          },");
-            //        list.AppendLine("                          child: const Text(");
-            //        list.AppendLine($"                            'Delete',");
-            //        list.AppendLine("                            style: TextStyle(");
-            //        list.AppendLine("                              color: Colors.white,");
-            //        list.AppendLine("                              fontSize: 14.0,");
-            //        list.AppendLine("                            ),");
-            //        list.AppendLine("                          ),");
-            //        list.AppendLine("                        ),");
-            //        list.AppendLine("                      ),");
-            //    }
-
-            //    list.AppendLine("                  const SizedBox(height: 10),");
-            //    list.AppendLine("                ],");
-            //    list.AppendLine("              ),");
-            //    list.AppendLine("            ),");
-            //    list.AppendLine("          );");
-            //    //paginationCheck
-            //    if ((bool)chkAllowPagination.IsChecked)
-            //    {
-            //        list.AppendLine("        } else {");
-            //        list.AppendLine("          return const Center(");
-            //        list.AppendLine("            child: CircularProgressIndicator(");
-            //        list.AppendLine("              color: Colors.white, backgroundColor: Colors.blue),");
-            //        list.AppendLine("            );");
-            //        list.AppendLine("          }");
-            //    }
-
-            //    list.AppendLine("      },");
-            //    list.AppendLine("    ),");
-            //    list.AppendLine("  );\r\n}");
-            //    list.AppendLine("------------------------------ End List Code ----------------------------------\n\n\n");
-            //    return list.ToString();
-            }
-            catch (Exception ex)
-            {
-            //    throw ex;
-            }
-
-
             StringBuilder list = new StringBuilder();
-
             try
             {
                 list.AppendLine($"-------------------- Start UI Code for List ----------------------\n\n\n");
@@ -441,13 +156,10 @@ namespace AutoCode.Presentation
                 list.AppendLine($"import 'package:flutter/services.dart';");
                 list.AppendLine($"import 'package:get/get.dart';");
                 list.AppendLine($"import 'dashboard_view_controller.dart';");
-
                 //import commented classes
                 list.AppendLine($"// import '../../const/app_color.dart';");
                 list.AppendLine($"// import '../../navigation/pages.dart';");
                 list.AppendLine($"// import '../../utility/local_db.dart';");
-
-
                 list.AppendLine($"class {FormName} extends GetView<{controllerName}> {{");
                 list.AppendLine($"  const {FormName}({{super.key}});");
                 //@override
@@ -534,7 +246,6 @@ namespace AutoCode.Presentation
                     $"}},\r\n                              " +  
                     $"),\r\n                            " + //closing tag of textformfield
                     $"),"); //closing tag of expanded
-
                 list.AppendLine($"const SizedBox(\r\n                              " +
                     $"width: 12,\r\n                            " +
                     $"),");
@@ -548,7 +259,6 @@ namespace AutoCode.Presentation
                     $"color: Colors.black,\r\n                              " +
                     $"),\r\n                            " +
                     $"),");
-
                 list.AppendLine($"const SizedBox(\r\n                              " +
                     $"width: 6,\r\n                            " +
                     $"),");
@@ -560,11 +270,9 @@ namespace AutoCode.Presentation
                     $"color: Colors.black,\r\n                              " +
                     $"),\r\n                            " +
                     $"),");
-
                 list.AppendLine($"                          ],");//childern closing tag
                 list.AppendLine($"                        ),");//row closing tag
                 list.AppendLine($"                            ),"); //container closing tag
-
                 //if list will empty
                 list.AppendLine($"controller.{listName}.isEmpty\r\n                          " +
                     $"? const Center(\r\n                              " +
@@ -721,12 +429,7 @@ namespace AutoCode.Presentation
                 list.AppendLine($"    );");                           //closing tag of Scaffold
                 list.AppendLine($"  }}");                              //closing tag of  Widget
                 list.AppendLine($"}}\n\n\n");                          //closing tag of class DashboardView
-
-
                 list.AppendLine($"---------------------- End UI Code of List -----------------------\n\n\n");
-
-
-
                 list.AppendLine("-------------------------------- Start Model Code ------------------------------------\n\n");
                 //import packages
                 list.AppendLine($"import 'package:flutter/material.dart';\r\n" +
@@ -785,45 +488,26 @@ namespace AutoCode.Presentation
                     $"update();\r\n    " +
                     $"}}\r\n  " +
                     $"}}");
-
                 list.AppendLine($"  getListApiCall() async {{}}");
                 list.AppendLine($"}}");  //closing tag for controller
-
                 list.AppendLine("------------------------------- End Model Code ----------------------------------\n\n\n");
                 return list.ToString();
             }
             catch (Exception ex)
             {
                 throw ex;
-                //MessageBox.Show(ex.Message);
             }
         }
-        private string generateListModel()
-        {
-            try
-            {
-                StringBuilder list = new StringBuilder();
-
-                return list.ToString();
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-        }
-
         private string generateForm()
         {
             StringBuilder form = new StringBuilder();
             try
             {
                 form.AppendLine($"------------------------Form Code Start Here----------------\n\n\n");
-
                 form.AppendLine($"import 'package:flutter/material.dart';");
                 form.AppendLine($"import 'package:flutter/services.dart';");
                 form.AppendLine($"import 'package:get/get.dart';");
                 form.AppendLine($"void main() => runApp({FormName}());\n");
-
                 //class _TextFormFieldCustomState
                 form.AppendLine($"class {FormName} extends GetView<{controllerName}> {{");
                 form.AppendLine($"  const {FormName}({{super.key}});");        
@@ -882,11 +566,9 @@ namespace AutoCode.Presentation
                                 $"return '{item.Label} is required';\r\n                    " +
                                 $"}}");
                         }
-                        
                         form.AppendLine($"if (!controller.emailRegex.value.hasMatch(email)) {{return 'Enter valid {item.Label}';}}");
                         form.AppendLine($"return null;");
                         form.AppendLine($" }},");
-
                         form.AppendLine($"),");   // closing tag of TextFormField
                     }
                     //------Dropdown------
@@ -1090,12 +772,8 @@ namespace AutoCode.Presentation
                 form.AppendLine($"    );");// closing tag of MaterialApp
                 form.AppendLine($"  }}");// closing tag of   Widget build(BuildContext context)
                 form.AppendLine($"}}");// closing tag of Class _TextFormFieldCustomState
-
                 form.AppendLine($"------------------------Form Code End Here----------------\n\n\n");
-
-
                 form.AppendLine($"------------------------API Code Starts Here----------------\n\n\n");
-
                 form.AppendLine($"class {controllerName} extends GetxController {{");
                 //commented controller
                 form.AppendLine($"  // HomeController homeController = Get.put(HomeController());\r\n  " +
@@ -1171,10 +849,6 @@ namespace AutoCode.Presentation
                 }
                 form.AppendLine($"  }}");  // closing bracket of api method
                 form.AppendLine($"}}");// closing bracket of controllerClass method
-
-
-
-
                 form.AppendLine($"------------------------API Code Ends Here----------------\n\n\n");
                 return form.ToString();
             }
@@ -1183,17 +857,13 @@ namespace AutoCode.Presentation
                 throw;
             }
         }
-
         private string generateNotification()
         {
             StringBuilder notification = new StringBuilder();
             try
             {
                 notification.AppendLine($"------------------------Notification Code Start Here----------------\n\n\n");
-
-
                 notification.AppendLine($"------------------------Notification Code End Here----------------\n\n\n");
-
                 return notification.ToString();
             }
             catch (Exception)
@@ -1201,19 +871,13 @@ namespace AutoCode.Presentation
                 throw;
             }
         }
-
-
-
-
         private void listCheckBox_Unchecked(object sender, RoutedEventArgs e)
         {
             listCheckBoxs.Visibility = Visibility.Collapsed;
         }
-
         private void listCheckBox_Checked(object sender, RoutedEventArgs e)
         {
             listCheckBoxs.Visibility = Visibility.Visible;
         }
-
     }
 }

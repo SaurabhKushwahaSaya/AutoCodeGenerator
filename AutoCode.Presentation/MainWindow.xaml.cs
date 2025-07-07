@@ -5,6 +5,7 @@ using Npgsql;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Configuration;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Reflection.Emit;
@@ -29,28 +30,36 @@ namespace AutoCode.Presentation
     /// </summary>
     public partial class MainWindow : Window
     {
+        public int developmentType = Convert.ToInt32(ConfigurationManager.AppSettings["Development"]);
         public MainWindow()
         {
             InitializeComponent();
             this.Loaded += MainWindow_Loaded;
         }
-
-
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
             BusyIndicator.IsBusy = false;
             cmbServerType.SelectedIndex = 2;
-            txtDatabaseName.Text = "sayatesting";
-            txtPassword.Password = "duca$$0234";
-            txtServerName.Text = "saya-dev2.cq6nozddb1mr.us-west-2.rds.amazonaws.com";
-            txtUserName.Text = "SayaDev";
-        }
 
+            if (developmentType == 0)
+            {
+                txtDatabaseName.Text = "sayatesting";
+                txtPassword.Password = "duca$$0234";
+                txtServerName.Text = "saya-dev2.cq6nozddb1mr.us-west-2.rds.amazonaws.com";
+                txtUserName.Text = "SayaDev";
+            }
+            else
+            {
+                txtDatabaseName.Text = "";
+                txtPassword.Password = "";
+                txtServerName.Text = "";
+                txtUserName.Text = "";
+            }
+        }
         private void btnClose_Click(object sender, RoutedEventArgs e)
         {
             App.Current.Shutdown();
         }
-
         private void btnConnectServer_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -105,10 +114,8 @@ namespace AutoCode.Presentation
                             BusyIndicator.IsBusy = true;
                             BusyIndicator.BusyContent = "We are connecting to MSSQL database.";
                             postgreSQLServerBackroundWorker.RunWorkerAsync(posgresSQLParamList);
-
                             break;
                         default:
-
                             break;
                     }
                 }
@@ -122,11 +129,6 @@ namespace AutoCode.Presentation
                         MessageBox.Show("Please Insert Form Name.");
                         return;
                     }
-                    //if (cmbFormType.SelectedIndex == 0)
-                    //{
-                    //    MessageBox.Show("Please select form type.");
-                    //    return;
-                    //}
                     if (string.IsNullOrWhiteSpace(txtFormModel.Text))
                     {
                         MessageBox.Show("Please insert model to generate form.");
@@ -143,7 +145,6 @@ namespace AutoCode.Presentation
                     flutterBackroundWorker.RunWorkerCompleted += FlutterBackroundWorker_RunWorkerCompleted;
                     List<string> flutterParamList = new List<string>();
                     flutterParamList.Add(txtFormName.Text.Trim());
-                    //flutterParamList.Add(cmbFormType.SelectedIndex.ToString());
                     flutterParamList.Add(JsonConvert.SerializeObject(properties));
                     BusyIndicator.IsBusy = true;
                     BusyIndicator.BusyContent = "Loading...";
@@ -159,11 +160,6 @@ namespace AutoCode.Presentation
                         MessageBox.Show("Please Insert Form Name.");
                         return;
                     }
-                    //if (cmbFormType1.SelectedIndex == 0)
-                    //{
-                    //    MessageBox.Show("Please select form type.");
-                    //    return;
-                    //}
                     if (string.IsNullOrWhiteSpace(txtFormModel1.Text))
                     {
                         MessageBox.Show("Please insert model to generate form.");
@@ -180,7 +176,6 @@ namespace AutoCode.Presentation
                     angularBackroundWorker.RunWorkerCompleted += AngularBackroundWorker_RunWorkerCompleted;
                     List<string> angularParamList = new List<string>();
                     angularParamList.Add(txtFormName1.Text.Trim());
-                    //angularParamList.Add(cmbFormType1.SelectedIndex.ToString());
                     angularParamList.Add(JsonConvert.SerializeObject(properties));
                     BusyIndicator.IsBusy = true;
                     BusyIndicator.BusyContent = "Loading...";
@@ -191,9 +186,7 @@ namespace AutoCode.Presentation
             {
                 MessageBox.Show(ex.Message);
             }
-
         }
-
         private List<FieldProperties> ExtractProperties(string input)
         {
             List<string> tempProps = input.Split('\n').ToList();
@@ -250,7 +243,6 @@ namespace AutoCode.Presentation
                 if (isSuccess)
                 {
                     MessageBox.Show("Database Connection Established.");
-                    //MessageBox.Show(SettingHelper.SqlConnectionStringBuilder.ConnectionString);
                     DatabaseTableList databaseTableList = new DatabaseTableList();
                     SettingHelper.ConnectionType = Enum.ConnectionType.PostgreSQLServer;
                     this.Hide();
@@ -260,7 +252,6 @@ namespace AutoCode.Presentation
                 else
                 {
                     MessageBox.Show("Database Connection Fail.");
-
                 }
             }
             catch (Exception ex)
@@ -307,7 +298,6 @@ namespace AutoCode.Presentation
                 if (isSuccess)
                 {
                     MessageBox.Show("Database Connection Established.");
-                    //MessageBox.Show(SettingHelper.SqlConnectionStringBuilder.ConnectionString);
                     DatabaseTableList databaseTableList = new DatabaseTableList();
                     SettingHelper.ConnectionType = Enum.ConnectionType.MicrosoftSQLServer;
                     this.Hide();
@@ -317,12 +307,10 @@ namespace AutoCode.Presentation
                 else
                 {
                     MessageBox.Show("Database Connection Fail.");
-
                 }
             }
             catch (Exception ex)
             {
-
                 throw ex;
             }
         }
@@ -374,13 +362,11 @@ namespace AutoCode.Presentation
                     UserID = sqlUserName,
                     Password = sqlPassword
                 };
-
                 SqlConnection conn = new SqlConnection(SettingHelper.SqlConnectionStringBuilder.ConnectionString);
                 conn.Open();
                 conn.Close();
                 conn.Dispose();
                 e.Result = true;
-
             }
             catch (Exception)
             {
@@ -397,7 +383,6 @@ namespace AutoCode.Presentation
             List<string> angularParamList = e.Argument as List<string>;
             e.Result = angularParamList;
         }
-
         private static readonly Regex _regexForOnlyNumeric = new Regex("[^0-9.-]+"); //regex that matches disallowed text
         private static bool IsTextAllowed(string text)
         {
@@ -407,6 +392,5 @@ namespace AutoCode.Presentation
         {
             e.Handled = !IsTextAllowed(e.Text);
         }
-
     }
 }
