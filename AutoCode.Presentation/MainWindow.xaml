@@ -8,18 +8,8 @@
         xmlns:busyIndicator="https://github.com/moh3ngolshani/BusyIndicator"
         Title="MainWindow" WindowStyle="None" ResizeMode="NoResize" Width="500" Height="450" WindowStartupLocation="CenterScreen" >
     <Window.Resources>
-
-
-
-
     </Window.Resources>
-    <busyIndicator:BusyMask 
-x:Name="BusyIndicator"
-BusyContent="Please wait..."
-BusyContentMargin="10"
-IsBusy="False" IndicatorType="Ellipse"
-IsBusyAtStartup="False" >
-
+    <busyIndicator:BusyMask x:Name="BusyIndicator" BusyContent="Please wait..." BusyContentMargin="10" IsBusy="False" IndicatorType="Ellipse" IsBusyAtStartup="False" >
         <Border  BorderThickness="2px" Margin="0" BorderBrush="#145DA0" CornerRadius="4" Background="#B1D4E0">
             <Grid>
                 <Grid.ColumnDefinitions>
