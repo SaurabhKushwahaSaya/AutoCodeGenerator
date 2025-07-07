@@ -21,7 +21,6 @@ IsBusy="False" IndicatorType="Ellipse"
 IsBusyAtStartup="False" >
 
         <Border  BorderThickness="2px" Margin="0" BorderBrush="#145DA0" CornerRadius="4" Background="#B1D4E0">
-
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="20px"></ColumnDefinition>
@@ -62,7 +61,7 @@ IsBusyAtStartup="False" >
                             <ComboBox x:Name="cmbServerType" Grid.Column="1" Style="{StaticResource ComboBoxRegular}" Grid.Row="0" VerticalAlignment="Center">
                                 <ComboBoxItem IsSelected="True" Style="{StaticResource ComboBoxItemRegular}" Background="#B1D4E0" Foreground="#0C2D48">Select Server</ComboBoxItem>
                                 <ComboBoxItem Background="#B1D4E0" Style="{StaticResource ComboBoxItemRegular}" Foreground="#0C2D48">SQL Server</ComboBoxItem>
-                                <ComboBoxItem Background="#B1D4E0" Style="{StaticResource ComboBoxItemRegular}" Foreground="#0C2D48">Postgray SQL</ComboBoxItem>
+                                <ComboBoxItem Background="#B1D4E0" Style="{StaticResource ComboBoxItemRegular}" Foreground="#0C2D48">PostgreSQL</ComboBoxItem>
                             </ComboBox>
 
                             <Label x:Name="textBlock" Grid.Column="0" Grid.Row="1"  Style="{StaticResource LabelRegular}" VerticalAlignment="Center">Server Name / IP</Label>
