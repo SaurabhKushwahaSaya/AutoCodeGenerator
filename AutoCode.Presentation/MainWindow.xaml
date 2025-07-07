@@ -21,7 +21,6 @@ IsBusy="False" IndicatorType="Ellipse"
 IsBusyAtStartup="False" >
 
         <Border  BorderThickness="2px" Margin="0" BorderBrush="#145DA0" CornerRadius="4" Background="#B1D4E0">
-
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="20px"></ColumnDefinition>
