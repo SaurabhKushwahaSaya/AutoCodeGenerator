@@ -8,23 +8,24 @@
             <Style x:Key="LabelRegular" TargetType="Label">
                 <Setter  Property="Foreground" Value="#0C2D48"></Setter>
                 <Setter Property="FontFamily" Value="Bahnschrift"></Setter>
-                <Setter Property="FontSize" Value="13"></Setter>
-                <Setter Property="Padding" Value="7"></Setter>
+                <Setter Property="FontSize" Value="14"></Setter>
+                <Setter Property="Padding" Value="3"></Setter>
+                <Setter Property="FontWeight" Value="SemiBold"></Setter>
                 <Setter Property="Margin" Value="0,5"></Setter>
             </Style>
             <Style x:Key="TextBoxRegular" TargetType="TextBox">
                 <Setter  Property="Background" Value="#0C2D48"></Setter>
                 <Setter  Property="Foreground" Value="#B1D4E0"></Setter>
                 <Setter Property="FontFamily" Value="Bahnschrift"></Setter>
-                <Setter Property="FontSize" Value="13"></Setter>
-                <Setter Property="Padding" Value="7"></Setter>
+                <Setter Property="FontSize" Value="14"></Setter>
+                <Setter Property="Padding" Value="3"></Setter>
                 <Setter Property="Margin" Value="0,5"></Setter>
             </Style>
             <Style x:Key="TextBlockRegular" TargetType="TextBlock">
                 <Setter  Property="Background" Value="#0C2D48"></Setter>
                 <Setter  Property="Foreground" Value="#B1D4E0"></Setter>
                 <Setter Property="FontFamily" Value="Bahnschrift"></Setter>
-                <Setter Property="FontSize" Value="13"></Setter>
+                <Setter Property="FontSize" Value="14"></Setter>
                 <Setter Property="Padding" Value="7"></Setter>
                 <Setter Property="Margin" Value="0,5"></Setter>
                 <Setter Property="TextWrapping" Value="WrapWithOverflow"></Setter>
@@ -32,7 +33,7 @@
             <Style x:Key="CheckBoxRegular" TargetType="CheckBox">
                 <Setter  Property="Foreground" Value="#0C2D48"></Setter>
                 <Setter Property="FontFamily" Value="Bahnschrift"></Setter>
-                <Setter Property="FontSize" Value="13"></Setter>
+                <Setter Property="FontSize" Value="14"></Setter>
                 <Setter Property="Padding" Value="7"></Setter>
                 <Setter Property="Margin" Value="5,0"></Setter>
                 <Setter Property="VerticalContentAlignment" Value="Center"></Setter>

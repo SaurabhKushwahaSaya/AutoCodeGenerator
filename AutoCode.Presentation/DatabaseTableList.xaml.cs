@@ -35,7 +35,6 @@ namespace AutoCode.Presentation
             InitializeComponent();
             this.Loaded += DatabaseTableList_Loaded;
         }
-
         private void DatabaseTableList_Loaded(object sender, RoutedEventArgs e)
         {
             try
@@ -49,13 +48,10 @@ namespace AutoCode.Presentation
             }
             catch (Exception ex)
             {
-
                 throw ex;
             }
         }
-
         #region Bind Table Names in Combobox
-
         private void GetTableNameBackgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             try
@@ -69,12 +65,10 @@ namespace AutoCode.Presentation
                 throw ex;
             }
         }
-
         private void GetTableNameBackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
         {
             try
             {
-
                 if (SettingHelper.ConnectionType == Enum.ConnectionType.MicrosoftSQLServer)
                 {
                     e.Result = GetTableNamesFromSQLServer();
@@ -89,9 +83,8 @@ namespace AutoCode.Presentation
                 throw ex;
             }
         }
-
+        #endregion
         #region Get Table Name From SQL and Postgre
-
         private List<string> GetTableNamesFromPostgreSQLServer()
         {
             try
@@ -118,7 +111,6 @@ namespace AutoCode.Presentation
                 throw ex;
             }
         }
-
         private List<string> GetTableNamesFromSQLServer()
         {
             try
@@ -137,20 +129,14 @@ namespace AutoCode.Presentation
             }
             catch (Exception ex)
             {
-
                 throw ex;
             }
         }
-
         #endregion
-
-        #endregion
-
         private void btnClose_Click(object sender, RoutedEventArgs e)
         {
             this.Close();
         }
-
         private void btnGenerate_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -158,6 +144,7 @@ namespace AutoCode.Presentation
                 TableColumnList = new Dictionary<string, Tuple<string, bool, bool>>();
                 primaryKeyOfTable = string.Empty;
                 txtBlockCode.Clear();
+                txtBlockSp.Clear();
                 if (cmbTable.SelectedValue == null || string.IsNullOrEmpty(cmbTable.SelectedValue.ToString().Trim()))
                 {
                     MessageBox.Show("Please Select Table.");
@@ -213,7 +200,6 @@ namespace AutoCode.Presentation
                             }
                         }
                     }
-
                 }
 
                 if (chkObjModel.IsChecked.Value)
@@ -225,31 +211,31 @@ namespace AutoCode.Presentation
                 {
                     if (chkCRUDInsert.IsChecked.Value)
                     {
-                        txtBlockCode.Text = txtBlockCode.Text + GenerateInsertStoreProcedure();
+                        txtBlockSp.Text = txtBlockSp.Text + GenerateInsertStoreProcedure();
                     }
                     if (chkCRUDUpdate.IsChecked.Value)
                     {
-                        txtBlockCode.Text = txtBlockCode.Text + GenerateUpdateStoreProcedureCode();
+                        txtBlockSp.Text = txtBlockSp.Text + GenerateUpdateStoreProcedureCode();
                     }
                     if (chkCRUDSoftDeleteById.IsChecked.Value)
                     {
-                        txtBlockCode.Text = txtBlockCode.Text + GenerateSoftDeleteStoreProcedureCode();
+                        txtBlockSp.Text = txtBlockSp.Text + GenerateSoftDeleteStoreProcedureCode();
                     }
                     if (chkCRUDHardDeleteById.IsChecked.Value)
                     {
-                        txtBlockCode.Text = txtBlockCode.Text + GenerateHardDeleteStoreProcedureCode();
+                        txtBlockSp.Text = txtBlockSp.Text + GenerateHardDeleteStoreProcedureCode();
                     }
                     if (chkCRUDSelectById.IsChecked.Value)
                     {
-                        txtBlockCode.Text = txtBlockCode.Text + GenerateSelectByIdStoreProcedureCode();
+                        txtBlockSp.Text = txtBlockSp.Text + GenerateSelectByIdStoreProcedureCode();
                     }
                     if (chkCRUDSelectAll.IsChecked.Value)
                     {
-                        txtBlockCode.Text = txtBlockCode.Text + GenerateSelectAllWithPaginationStoreProcedureCode();
+                        txtBlockSp.Text = txtBlockSp.Text + GenerateSelectAllWithPaginationStoreProcedureCode();
                     }
                     if (getList.IsChecked.Value)
                     {
-                        txtBlockCode.Text = txtBlockCode.Text + GenerateListStoreProcedure();
+                        txtBlockSp.Text = txtBlockSp.Text + GenerateListStoreProcedure();
                     }
                 }
                 if (chkObjCode.IsChecked.Value)
@@ -291,14 +277,12 @@ namespace AutoCode.Presentation
                 MessageBox.Show(ex.Message);
             }
         }
-
         #region Generate Model Code C#
         private string GenerateModelCode()
         {
             string modelCode = string.Empty;
             try
             {
-
                 StringBuilder classBuilder = new StringBuilder();
                 classBuilder.AppendLine("--------------------------------------------------------------- Start Model Code ----------------------------------------------------------------------");
                 classBuilder.AppendLine("using System;");
@@ -329,12 +313,10 @@ namespace AutoCode.Presentation
             }
             catch (Exception ex)
             {
-
                 throw ex;
             }
         }
         #endregion
-
         private string GenerateInsertStoreProcedure()
         {
             try
@@ -344,7 +326,7 @@ namespace AutoCode.Presentation
                 StringBuilder valueBuilder = new StringBuilder();
                 if (SettingHelper.ConnectionType == Enum.ConnectionType.MicrosoftSQLServer)
                 {
-                    classBuilder.AppendLine("--------------------------------------------------------------- Start Insert SP Code ----------------------------------------------------------------------");
+                    classBuilder.AppendLine("---------------------------------- Start Insert SP Code ----------------------------------");
                     classBuilder.AppendLine($"USE [{SettingHelper.SqlConnectionStringBuilder.InitialCatalog}]");
                     classBuilder.AppendLine("");
                     classBuilder.AppendLine("SET ANSI_NULLS ON");
@@ -388,19 +370,16 @@ namespace AutoCode.Presentation
                                     classBuilder.Append(",");
                                     insertBuilder.AppendLine($",[{item.Key}]");
                                     valueBuilder.AppendLine($",@{item.Key}");
-
                                 }
                             }
-
                         }
                     }
                     valueBuilder.AppendLine($"END");
-                    valueBuilder.AppendLine($"--------------------------------------------------------------- End Insert SP Code ----------------------------------------------------------------------");
-
+                    valueBuilder.AppendLine($"---------------------------------- End Insert SP Code ----------------------------------");
                 }
                 else if (SettingHelper.ConnectionType == Enum.ConnectionType.PostgreSQLServer)
                 {
-                    classBuilder.AppendLine("--------------------------------------------------------------- Start Insert SP Code ----------------------------------------------------------------------");
+                    classBuilder.AppendLine("---------------------------------- Start Insert SP Code ----------------------------------");
                     classBuilder.Append($"CREATE OR REPLACE FUNCTION public.{tableName.ToLower()}_add(");
                     insertBuilder.Append($"\tINSERT INTO \"{tableName}\"(");
                     valueBuilder.Append($"\tValues (");
@@ -435,19 +414,15 @@ namespace AutoCode.Presentation
                     valueBuilder.Append(");\r\n");
 
                     valueBuilder.AppendLine($"\tGET DIAGNOSTICS affected = ROW_COUNT;\r\n\tIF affected = 1 THEN\r\n \t\tRETURN true;\r\n\tELSE\r\n\t\tRETURN false;\r\n\tEND IF;\r\n  END \r\n $function$\r\n;");
-                    valueBuilder.AppendLine($"--------------------------------------------------------------- End Insert SP Code ----------------------------------------------------------------------");
-
+                    valueBuilder.AppendLine($"---------------------------------- End Insert SP Code ----------------------------------"); 
                 }
-
                 return classBuilder.ToString() + insertBuilder.ToString() + valueBuilder.ToString();
-
             }
             catch (Exception ex)
             {
                 throw ex;
             }
         }
-
         private string GenerateUpdateStoreProcedureCode()
         {
             try
@@ -455,7 +430,7 @@ namespace AutoCode.Presentation
                 StringBuilder classBuilder = new StringBuilder();
                 StringBuilder UpdateBuilder = new StringBuilder();
                 StringBuilder WhereBuilder = new StringBuilder();
-                classBuilder.AppendLine("--------------------------------------------------------------- Start Update SP Code ----------------------------------------------------------------------");
+                classBuilder.AppendLine("---------------------------------- Start Update SP Code ----------------------------------");
                 if (SettingHelper.ConnectionType == Enum.ConnectionType.MicrosoftSQLServer)
                 {
                     classBuilder.AppendLine($"USE [{SettingHelper.SqlConnectionStringBuilder.InitialCatalog}]");
@@ -479,8 +454,6 @@ namespace AutoCode.Presentation
                         }
                         appendComma = true;
                         classBuilder.AppendLine(GetParameterForStoreProcedureForSQL(item.Key, item.Value.Item1));
-
-
                         if (item.Value.Item3)
                         {
                             WhereBuilder.AppendLine($"WHERE [{item.Key}] = @{item.Key}");
@@ -502,12 +475,10 @@ namespace AutoCode.Presentation
                             }
                         }
                     }
-
                     WhereBuilder.AppendLine($"END ");
                 }
                 else if (SettingHelper.ConnectionType == Enum.ConnectionType.PostgreSQLServer)
                 {
-
                     classBuilder.Append($"CREATE OR REPLACE FUNCTION public.{tableName.ToLower()}_update(");
                     WhereBuilder.Append($"");
                     bool appendComma = false;
@@ -543,13 +514,9 @@ namespace AutoCode.Presentation
                             }
                         }
                     }
-
-
                     WhereBuilder.AppendLine($"\tGET DIAGNOSTICS affected = ROW_COUNT;\r\n\tIF affected = 1 THEN\r\n \t\tRETURN true;\r\n\tELSE\r\n\t\tRETURN false;\r\n\tEND IF;\r\n  END \r\n $function$\r\n;");
-
-
                 }
-                WhereBuilder.AppendLine($"--------------------------------------------------------------- End UPDATE SP Code ----------------------------------------------------------------------");
+                WhereBuilder.AppendLine($"---------------------------------- End UPDATE SP Code ----------------------------------");
                 return classBuilder.ToString() + UpdateBuilder.ToString() + WhereBuilder.ToString();
             }
             catch (Exception ex)
@@ -557,14 +524,13 @@ namespace AutoCode.Presentation
                 throw ex;
             }
         }
-
         private string GenerateSoftDeleteStoreProcedureCode()
         {
             try
             {
                 StringBuilder classBuilder = new StringBuilder();
                 StringBuilder WhereBuilder = new StringBuilder();
-                classBuilder.AppendLine("--------------------------------------------------------------- Start Soft Delete SP Code ----------------------------------------------------------------------");
+                classBuilder.AppendLine("---------------------------------- Start Soft Delete SP Code ----------------------------------");
                 if (SettingHelper.ConnectionType == Enum.ConnectionType.MicrosoftSQLServer)
                 {
                     classBuilder.AppendLine($"USE [{SettingHelper.SqlConnectionStringBuilder.InitialCatalog}]");
@@ -601,7 +567,7 @@ namespace AutoCode.Presentation
                     classBuilder.Append($"\r\n\tSET \"IsDeleted\" = 1 \r\n\tWhere \"{primaryKey.Key}\" = {primaryKey.Key.ToLower()};");
                     classBuilder.AppendLine($"\r\n\tGET DIAGNOSTICS affected = ROW_COUNT;\r\n\tIF affected = 1 THEN\r\n \t\tRETURN true;\r\n\tELSE\r\n\t\tRETURN false;\r\n\tEND IF;\r\n  END \r\n $function$\r\n;");
                 }
-                WhereBuilder.AppendLine($"--------------------------------------------------------------- End Soft Delete SP Code ----------------------------------------------------------------------");
+                WhereBuilder.AppendLine($"---------------------------------- End Soft Delete SP Code ----------------------------------");
                 return classBuilder.ToString() + WhereBuilder.ToString();
             }
             catch (Exception ex)
@@ -609,14 +575,13 @@ namespace AutoCode.Presentation
                 throw ex;
             }
         }
-
         private string GenerateHardDeleteStoreProcedureCode()
         {
             try
             {
                 StringBuilder classBuilder = new StringBuilder();
                 StringBuilder WhereBuilder = new StringBuilder();
-                classBuilder.AppendLine("--------------------------------------------------------------- Start Hard Delete SP Code ----------------------------------------------------------------------");
+                classBuilder.AppendLine("---------------------------------- Start Hard Delete SP Code ----------------------------------");
                 if (SettingHelper.ConnectionType == Enum.ConnectionType.MicrosoftSQLServer)
                 {
                     classBuilder.AppendLine($"USE [{SettingHelper.SqlConnectionStringBuilder.InitialCatalog}]");
@@ -629,10 +594,8 @@ namespace AutoCode.Presentation
                     classBuilder.AppendLine($"CREATE PROCEDURE [{tableName}_Hard_Delete]");
                     classBuilder.AppendLine("");
                     classBuilder.AppendLine("");
-
                     var primaryKey = TableColumnList.Where(x => x.Value.Item3).First();
                     classBuilder.AppendLine(GetParameterForStoreProcedureForSQL(primaryKey.Key, primaryKey.Value.Item1));
-
                     classBuilder.AppendLine($"AS");
                     classBuilder.AppendLine($"BEGIN");
                     classBuilder.AppendLine($"SET NOCOUNT ON;");
@@ -654,7 +617,7 @@ namespace AutoCode.Presentation
                     classBuilder.Append($"\r\n\tWhere \"{primaryKey.Key}\" = {primaryKey.Key.ToLower()};");
                     classBuilder.AppendLine($"\r\n\tGET DIAGNOSTICS affected = ROW_COUNT;\r\n\tIF affected = 1 THEN\r\n \t\tRETURN true;\r\n\tELSE\r\n\t\tRETURN false;\r\n\tEND IF;\r\n  END \r\n $function$\r\n;");
                 }
-                WhereBuilder.AppendLine($"\r\n--------------------------------------------------------------- End Hard Delete SP Code ----------------------------------------------------------------------");
+                WhereBuilder.AppendLine($"\r\n---------------------------------- End Hard Delete SP Code ----------------------------------");
                 return classBuilder.ToString() + WhereBuilder.ToString();
             }
             catch (Exception ex)
@@ -662,14 +625,13 @@ namespace AutoCode.Presentation
                 throw ex;
             }
         }
-
         private string GenerateSelectByIdStoreProcedureCode()
         {
             try
             {
                 StringBuilder classBuilder = new StringBuilder();
                 StringBuilder WhereBuilder = new StringBuilder();
-                classBuilder.AppendLine("--------------------------------------------------------------- Start Select SP Code ----------------------------------------------------------------------");
+                classBuilder.AppendLine("---------------------------------- Start Select SP Code ----------------------------------");
                 if (SettingHelper.ConnectionType == Enum.ConnectionType.MicrosoftSQLServer)
                 {
                     classBuilder.AppendLine($"USE [{SettingHelper.SqlConnectionStringBuilder.InitialCatalog}]");
@@ -685,7 +647,6 @@ namespace AutoCode.Presentation
 
                     var primaryKey = TableColumnList.Where(x => x.Value.Item3).First();
                     classBuilder.AppendLine(GetParameterForStoreProcedureForSQL(primaryKey.Key, primaryKey.Value.Item1));
-
                     classBuilder.AppendLine($"AS");
                     classBuilder.AppendLine($"BEGIN");
                     classBuilder.AppendLine($"SET NOCOUNT ON;");
@@ -694,12 +655,8 @@ namespace AutoCode.Presentation
                     {
                         var item = TableColumnList.ElementAt(i);
                         if (i != 0)
-                        {
                             classBuilder.Append($",");
-
-                        }
                         classBuilder.AppendLine($"[{item.Key.ToString()}]");
-
                     }
                     classBuilder.AppendLine($" From [{tableName}]");
                     WhereBuilder.AppendLine($"WHERE [{primaryKey.Key}] = @{primaryKey.Key}");
@@ -728,7 +685,7 @@ namespace AutoCode.Presentation
                     classBuilder.AppendLine($"\twhere \"{primaryKey.Key}\" = {primaryKey.Key.ToLower()};");
                     classBuilder.AppendLine($"END\r\n$function$\r\n;");
                 }
-                WhereBuilder.AppendLine($"--------------------------------------------------------------- End Select SP Code ----------------------------------------------------------------------");
+                WhereBuilder.AppendLine($"---------------------------------- End Select SP Code ----------------------------------");
                 return classBuilder.ToString() + WhereBuilder.ToString();
             }
             catch (Exception ex)
@@ -736,14 +693,12 @@ namespace AutoCode.Presentation
                 throw ex;
             }
         }
-
         private string GenerateSelectAllRecordWithPagination()
         {
             try
             {
-
                 StringBuilder classBuilder = new StringBuilder();
-                classBuilder.AppendLine("--------------------------------------------------------------- Start Select All with Pagination, Search And Sort Code ----------------------------------------------------------------------");
+                classBuilder.AppendLine("---------------------------------- Start Select All with Pagination, Search And Sort Code ----------------------------------");
                 string tableNameAsVariable = ConvertProperCaseStringToCamelCaseString(tableName);
                 string tableListAsVariable = $"{ConvertProperCaseStringToCamelCaseString(tableName)}List";
 
@@ -796,7 +751,7 @@ namespace AutoCode.Presentation
                 classBuilder.AppendLine($"\t\tpaginationModel.List = objList;");
                 classBuilder.AppendLine($"\t\treturn paginationModel;");
                 classBuilder.AppendLine("\t}\r\n\tcatch (Exception ex)\r\n\t{\r\n\t\tthrow ex;\r\n\t}\r\n}");
-                classBuilder.AppendLine("--------------------------------------------------------------- End Select All with Pagination, Search And Sort Code ----------------------------------------------------------------------");
+                classBuilder.AppendLine("---------------------------------- End Select All with Pagination, Search And Sort Code ----------------------------------");
                 classBuilder.AppendLine();
                 return classBuilder.ToString();
             }
@@ -805,13 +760,12 @@ namespace AutoCode.Presentation
                 throw ex;
             }
         }
-
         private string GenerateSelectAllWithPaginationStoreProcedureCode()
         {
             try
             {
                 StringBuilder classBuilder = new StringBuilder();
-                classBuilder.AppendLine("--------------------------------------------------------------- Start Select all with pagination SP Code ----------------------------------------------------------------------");
+                classBuilder.AppendLine("---------------------------------- Start Select all with pagination SP Code ----------------------------------");
                 if (SettingHelper.ConnectionType == Enum.ConnectionType.MicrosoftSQLServer)
                 {
                     classBuilder.AppendLine($"USE [{SettingHelper.SqlConnectionStringBuilder.InitialCatalog}]");
@@ -839,8 +793,6 @@ namespace AutoCode.Presentation
                     classBuilder.AppendLine($"SET @TotalRowsTemp = @FirstRecTemp - @LastRecTemp + 1;");
                     classBuilder.AppendLine($"");
                     classBuilder.AppendLine($"WITH {tableName}Data as(SELECT ROW_NUMBER() OVER (ORDER BY");
-
-
                     classBuilder.AppendLine($"");
                     bool addComma = false;
 
@@ -850,10 +802,7 @@ namespace AutoCode.Presentation
                         if (IsColumnString(item.Value.Item1) || IsColumnDate(item.Value.Item1))
                         {
                             if (addComma)
-                            {
                                 classBuilder.Append($",");
-
-                            }
                             classBuilder.AppendLine($" CASE WHEN @SortColTemp = '{item.Key.ToLower().ToString()}' AND @SortOrder = 1 THEN [{item.Key.ToString()}] END ASC");
                             classBuilder.AppendLine($" ,CASE WHEN @SortColTemp = '{item.Key.ToLower().ToString()}' AND @SortOrder = -1 THEN [{item.Key.ToString()}] END DESC");
                             addComma = true;
@@ -867,25 +816,18 @@ namespace AutoCode.Presentation
                         if (IsColumnString(item.Value.Item1))
                         {
                             if (addOr)
-                            {
                                 classBuilder.AppendLine($"OR");
-                            }
                             else
-                            {
                                 classBuilder.AppendLine($" WHERE (");
 
-                            }
                             classBuilder.AppendLine($" (@SearchTextTemp IS NULL OR [{item.Key.ToString()}]  LIKE '%' + @SearchTextTemp + '%')");
                             if (addOr == false)
-                            {
                                 addOr = true;
-                            }
                         }
                     }
                     if (addOr)
-                    {
                         classBuilder.AppendLine($")");
-                    }
+
                     classBuilder.AppendLine($")");
                     classBuilder.AppendLine($"SELECT");
                     classBuilder.AppendLine($"TotalCount");
@@ -894,7 +836,6 @@ namespace AutoCode.Presentation
                     {
                         var item = TableColumnList.ElementAt(i);
                         classBuilder.AppendLine($",{item.Key.ToString()}");
-
                     }
                     classBuilder.AppendLine($"FROM {tableName}Data");
                     classBuilder.AppendLine($"WHERE ROWNUM > @FirstRecTemp AND ROWNUM < @LastRecTemp");
@@ -956,7 +897,7 @@ namespace AutoCode.Presentation
                     classBuilder.AppendLine($"\tlimit pagesize;");
                     classBuilder.AppendLine($"END\r\n$function$\r\n;");
                 }
-                classBuilder.AppendLine($"--------------------------------------------------------------- End Select all with pagination SP Code ----------------------------------------------------------------------");
+                classBuilder.AppendLine($"---------------------------------- End Select all with pagination SP Code ----------------------------------");
                 return classBuilder.ToString();
             }
             catch (Exception ex)
@@ -964,8 +905,6 @@ namespace AutoCode.Presentation
                 throw ex;
             }
         }
-
-
         private string GenerateListStoreProcedure()
         {
             try
@@ -973,14 +912,12 @@ namespace AutoCode.Presentation
                 StringBuilder classBuilder = new StringBuilder();
                 StringBuilder returnParams = new StringBuilder();
                 StringBuilder tableParams = new StringBuilder();
-                classBuilder.AppendLine("--------------------------------------------------------------- Start List's SP Code ----------------------------------------------------------------------");
+                classBuilder.AppendLine("---------------------------------- Start List's SP Code ----------------------------------");
                 if (SettingHelper.ConnectionType == Enum.ConnectionType.MicrosoftSQLServer)
                 {
                     classBuilder.AppendLine($"USE [{SettingHelper.SqlConnectionStringBuilder.InitialCatalog}]");
                     classBuilder.AppendLine($"CREATE PROCEDURE dbo.getAllData_{tableName.ToLower()}");
-                    classBuilder.Append($"AS\r\n" +
-                        $"BEGIN\r\n    " +
-                        $"SET NOCOUNT ON;");
+                    classBuilder.Append($"AS\r\n" + $"BEGIN\r\n    " + $"SET NOCOUNT ON;");
                     returnParams.AppendLine($"\nSELECT ");
                     bool appendComma = false;
                     for (int i = 0; i < TableColumnList.Count(); i++)
@@ -995,7 +932,6 @@ namespace AutoCode.Presentation
                     }
                     returnParams.AppendLine($" From dbo.{tableName}");
                     tableParams.AppendLine($"End;");
-
                 }
                 else if (SettingHelper.ConnectionType == Enum.ConnectionType.PostgreSQLServer)
                 {
@@ -1021,17 +957,15 @@ namespace AutoCode.Presentation
                         }
                     }
                     returnParams.Append(")");
-
-
                     returnParams.AppendLine($"\nLANGUAGE plpgsql");
                     returnParams.AppendLine($"AS $function$");
                     returnParams.AppendLine($"BEGIN");
                     returnParams.AppendLine($"   RETURN QUERY");
-                    tableParams.AppendLine($" FROM public.\"{tableName}\";");
+                    tableParams.AppendLine($" FROM public.\"{tableName}\"");
+                    tableParams.AppendLine($" Where \"IsDeleted\" = false;");
                     tableParams.AppendLine($"END;\r\n$function$\r\n;");
                 }
-                tableParams.AppendLine("\n--------------------------------------------------------------- End List's SP Code ----------------------------------------------------------------------");
-
+                tableParams.AppendLine("\n---------------------------------- End List's SP Code ----------------------------------");
                 return classBuilder.ToString() + returnParams.ToString() + tableParams.ToString();
             }
             catch (Exception ex)
@@ -1044,9 +978,7 @@ namespace AutoCode.Presentation
             try
             {
                 StringBuilder classBuilder = new StringBuilder();
-                //StringBuilder listBuilder = new StringBuilder();
-                //StringBuilder extraBuilder = new StringBuilder();
-                classBuilder.AppendLine("--------------------------------------------------------------- Start List's Code ----------------------------------------------------------------------");
+                classBuilder.AppendLine("---------------------------------- Start List's Code ----------------------------------");
                 classBuilder.AppendLine($"public static List<{tableName}> GetAllData()");
                 classBuilder.AppendLine($"{{");
                 classBuilder.AppendLine($"            try\r\n            {{");
@@ -1054,8 +986,6 @@ namespace AutoCode.Presentation
                 if (SettingHelper.ConnectionType == Enum.ConnectionType.MicrosoftSQLServer)
                 {
                     classBuilder.AppendLine($"                DataTable dt = PostgreSQLHandler.ExecuteDataTable(connectionString, \"dbo.getAllData_{tableName.ToLower()}\");");
-
-                    //classBuilder.AppendLine($"");
                 }
                 else if (SettingHelper.ConnectionType == Enum.ConnectionType.PostgreSQLServer)
                 {
@@ -1080,9 +1010,7 @@ namespace AutoCode.Presentation
                     $"throw ex;  " +
                     $"\n             }}");
                 classBuilder.AppendLine($" }}");
-
-                classBuilder.AppendLine("--------------------------------------------------------------- End List's Code ----------------------------------------------------------------------");
-
+                classBuilder.AppendLine("---------------------------------- End List's Code ----------------------------------");
                 return classBuilder.ToString();
             }
             catch (Exception ex)
@@ -1090,14 +1018,13 @@ namespace AutoCode.Presentation
                 throw ex;
             }
         }
-
         private string GenerateInsertRecordCode()
         {
             try
             {
                 StringBuilder classBuilder = new StringBuilder();
                 string tableNameAsVariable = ConvertProperCaseStringToCamelCaseString(tableName);
-                classBuilder.AppendLine("--------------------------------------------------------------- Start Add Record Code ----------------------------------------------------------------------");
+                classBuilder.AppendLine("---------------------------------- Start Add Record Code ----------------------------------");
                 classBuilder.AppendLine($"public void {tableName}Insert ({tableName} {tableNameAsVariable})");
                 classBuilder.AppendLine("{\r\n\ttry\r\n\t{");
                 if (SettingHelper.ConnectionType == Enum.ConnectionType.MicrosoftSQLServer)
@@ -1127,7 +1054,7 @@ namespace AutoCode.Presentation
                     classBuilder.AppendLine($"\t\tbool spResult = PostgreSQLHandler.ExecuteAsScalar<bool>(\"{tableName.ToLower()}_add\", paramList);");
                 }
                 classBuilder.AppendLine("\t}\r\n\tcatch (Exception ex)\r\n\t{\r\n\t\tthrow ex;\r\n\t}\r\n}");
-                classBuilder.AppendLine("--------------------------------------------------------------- End Add Record Code ----------------------------------------------------------------------");
+                classBuilder.AppendLine("---------------------------------- End Add Record Code ----------------------------------");
                 classBuilder.AppendLine();
                 return classBuilder.ToString();
             }
@@ -1136,14 +1063,13 @@ namespace AutoCode.Presentation
                 throw ex;
             }
         }
-
         private string GenerateUpdateRecordCode()
         {
             try
             {
                 StringBuilder classBuilder = new StringBuilder();
                 string tableNameAsVariable = ConvertProperCaseStringToCamelCaseString(tableName);
-                classBuilder.AppendLine("--------------------------------------------------------------- Start Update Record Code ----------------------------------------------------------------------");
+                classBuilder.AppendLine("---------------------------------- Start Update Record Code ----------------------------------");
                 classBuilder.AppendLine($"public void {tableName}Update ({tableName} {tableNameAsVariable})");
                 classBuilder.AppendLine("{\r\n\ttry\r\n\t{");
                 if (SettingHelper.ConnectionType == Enum.ConnectionType.MicrosoftSQLServer)
@@ -1170,7 +1096,7 @@ namespace AutoCode.Presentation
                     classBuilder.AppendLine($"\t\tbool spResult = PostgreSQLHandler.ExecuteAsScalar<bool>(\"{tableName.ToLower()}_update\", paramList);");
                 }
                 classBuilder.AppendLine("\t}\r\n\tcatch (Exception ex)\r\n\t{\r\n\t\tthrow ex;\r\n\t}\r\n}");
-                classBuilder.AppendLine("--------------------------------------------------------------- End Update Record Code ----------------------------------------------------------------------");
+                classBuilder.AppendLine("---------------------------------- End Update Record Code ----------------------------------");
                 classBuilder.AppendLine();
                 return classBuilder.ToString();
             }
@@ -1179,15 +1105,14 @@ namespace AutoCode.Presentation
                 throw ex;
             }
         }
-
         private string GetPaginationModelCode()
         {
             try
             {
                 StringBuilder classBuilder = new StringBuilder();
-                classBuilder.AppendLine("--------------------------------------------------------------- Start Pagination Model Code ----------------------------------------------------------------------");
+                classBuilder.AppendLine("---------------------------------- Start Pagination Model Code ----------------------------------");
                 classBuilder.AppendLine("public class PaginationModel{\r\npublic object List{ get; set; }\r\npublic int PageSize{ get; set; }\r\n public int PageIndex { get; set; }\r\n public int TotalRows { get; set; }\r\n public int TotalPages { get; set; }\r\n public string SearchText { get; set; }\r\npublic string SortField { get; set; }\r\npublic int SortType { get; set; }\r\n}");
-                classBuilder.AppendLine("--------------------------------------------------------------- End Pagination Model Code ----------------------------------------------------------------------");
+                classBuilder.AppendLine("---------------------------------- End Pagination Model Code ----------------------------------");
                 return classBuilder.ToString();
             }
             catch (Exception ex)
@@ -1200,9 +1125,9 @@ namespace AutoCode.Presentation
             try
             {
                 StringBuilder classBuilder = new StringBuilder();
-                classBuilder.AppendLine("--------------------------------------------------------------- Start Data List Model Code ----------------------------------------------------------------------");
+                classBuilder.AppendLine("---------------------------------- Start Data List Model Code ----------------------------------");
                 classBuilder.AppendLine($"public class DataListModel : {tableName}" + "\r\n{\r\n\tpublic long ROWNUM { get; set; }\r\n\tpublic long TotalCount { get; set; }\r\n}");
-                classBuilder.AppendLine("--------------------------------------------------------------- End Data List Model Code ----------------------------------------------------------------------");
+                classBuilder.AppendLine("---------------------------------- End Data List Model Code ----------------------------------");
                 return classBuilder.ToString();
             }
             catch (Exception ex)
@@ -1210,15 +1135,14 @@ namespace AutoCode.Presentation
                 throw ex;
             }
         }
-
         private string GetDataTablePagintaionCode()
         {
             try
             {
                 StringBuilder classBuilder = new StringBuilder();
-                classBuilder.AppendLine("--------------------------------------------------------------- Start Pagination Model Code ----------------------------------------------------------------------");
+                classBuilder.AppendLine("---------------------------------- Start Pagination Model Code ----------------------------------");
                 classBuilder.AppendLine("public class DataTablePagintaion \r\n{ \r\n public DataTablePagintaion() \r\n { \r\n PageSize = 20; \r\n SortType = 1; \r\n } \r\n public int PageIndex { get; set; }\r\n public int PageSize { get; set; }\r\n public string SearchText { get; set; }\r\n public string SortField { get; set; }\r\n public int SortType { get; set; } \r\n }");
-                classBuilder.AppendLine("--------------------------------------------------------------- End Pagination Model Code ----------------------------------------------------------------------");
+                classBuilder.AppendLine("---------------------------------- End Pagination Model Code ----------------------------------");
                 return classBuilder.ToString();
             }
             catch (Exception ex)
@@ -1226,13 +1150,12 @@ namespace AutoCode.Presentation
                 throw ex;
             }
         }
-
         private string GenerateSelectRecordByIdCode()
         {
             try
             {
                 StringBuilder classBuilder = new StringBuilder();
-                classBuilder.AppendLine("--------------------------------------------------------------- Start Select Record By Id Code ----------------------------------------------------------------------");
+                classBuilder.AppendLine("---------------------------------- Start Select Record By Id Code ----------------------------------");
                 string tableNameAsVariable = ConvertProperCaseStringToCamelCaseString(tableName);
                 if (SettingHelper.ConnectionType == Enum.ConnectionType.MicrosoftSQLServer)
                 {
@@ -1268,7 +1191,7 @@ namespace AutoCode.Presentation
                 }
                 classBuilder.AppendLine($"\t\treturn {ConvertProperCaseStringToCamelCaseString(tableName)};");
                 classBuilder.AppendLine("\t}\r\n\tcatch (Exception ex)\r\n\t{\r\n\t\tthrow ex;\r\n\t}\r\n}");
-                classBuilder.AppendLine("--------------------------------------------------------------- End Select Record By Id Code ----------------------------------------------------------------------");
+                classBuilder.AppendLine("---------------------------------- End Select Record By Id Code ----------------------------------");
                 classBuilder.AppendLine();
                 return classBuilder.ToString();
             }
@@ -1277,14 +1200,13 @@ namespace AutoCode.Presentation
                 throw ex;
             }
         }
-
         private string GenerateSoftDeleteRecordCode()
         {
             try
             {
                 StringBuilder classBuilder = new StringBuilder();
                 string tableNameAsVariable = ConvertProperCaseStringToCamelCaseString(tableName);
-                classBuilder.AppendLine("--------------------------------------------------------------- Start Soft Delete Record Code ----------------------------------------------------------------------");
+                classBuilder.AppendLine("---------------------------------- Start Soft Delete Record Code ----------------------------------");
                 classBuilder.AppendLine($"public void {tableName} {tableName}SoftDelete ({tableName} {tableNameAsVariable})");
                 classBuilder.AppendLine("{\r\n\ttry\r\n\t{");
                 if (SettingHelper.ConnectionType == Enum.ConnectionType.MicrosoftSQLServer)
@@ -1300,7 +1222,7 @@ namespace AutoCode.Presentation
                     classBuilder.AppendLine($"\t\tbool spResult = PostgreSQLHandler.ExecuteAsScalar<bool>(\"{tableName.ToLower()}_softdelete\", paramList);");
                 }
                 classBuilder.AppendLine("\t}\r\n\tcatch (Exception ex)\r\n\t{\r\n\t\tthrow ex;\r\n\t}\r\n}");
-                classBuilder.AppendLine("--------------------------------------------------------------- End Soft Delete Record Code ----------------------------------------------------------------------");
+                classBuilder.AppendLine("---------------------------------- End Soft Delete Record Code ----------------------------------");
                 classBuilder.AppendLine();
                 return classBuilder.ToString();
             }
@@ -1309,14 +1231,13 @@ namespace AutoCode.Presentation
                 throw ex;
             }
         }
-
         private string GenerateHardDeleteRecordCode()
         {
             try
             {
                 StringBuilder classBuilder = new StringBuilder();
                 string tableNameAsVariable = ConvertProperCaseStringToCamelCaseString(tableName);
-                classBuilder.AppendLine("--------------------------------------------------------------- Start Hard Delete Record Code ----------------------------------------------------------------------");
+                classBuilder.AppendLine("---------------------------------- Start Hard Delete Record Code ----------------------------------");
                 classBuilder.AppendLine($"public void {tableName} {tableName}HardDelete ({tableName} {tableNameAsVariable})");
                 classBuilder.AppendLine("{\r\n\ttry\r\n\t{");
                 if (SettingHelper.ConnectionType == Enum.ConnectionType.MicrosoftSQLServer)
@@ -1332,7 +1253,7 @@ namespace AutoCode.Presentation
                     classBuilder.AppendLine($"\t\tbool spResult = PostgreSQLHandler.ExecuteAsScalar<bool>(\"{tableName.ToLower()}_harddelete\", paramList);");
                 }
                 classBuilder.AppendLine("\t}\r\n\tcatch (Exception ex)\r\n\t{\r\n\t\tthrow ex;\r\n\t}\r\n}");
-                classBuilder.AppendLine("--------------------------------------------------------------- End Hard Delete Record Code ----------------------------------------------------------------------");
+                classBuilder.AppendLine("---------------------------------- End Hard Delete Record Code ----------------------------------");
                 classBuilder.AppendLine();
                 return classBuilder.ToString();
             }
@@ -1341,7 +1262,6 @@ namespace AutoCode.Presentation
                 throw ex;
             }
         }
-
         private string ConvertProperCaseStringToCamelCaseString(string value)
         {
             try
@@ -1353,7 +1273,6 @@ namespace AutoCode.Presentation
                 throw ex;
             }
         }
-
         private string GetParameterForStoreProcedureForSQL(string columnName, string type)
         {
             try
@@ -1386,7 +1305,6 @@ namespace AutoCode.Presentation
                 throw ex;
             }
         }
-
         private string AssignModelPropertyComingFromDatabase(string tableVariableName, string columnName, string type, bool isNullable)
         {
             try
@@ -1578,14 +1496,12 @@ namespace AutoCode.Presentation
                 throw ex;
             }
         }
-
         private bool IsColumnString(string type)
         {
             try
             {
                 switch (type)
                 {
-
                     case "varchar":
                     case "character varying":
                     case "nvarchar":
@@ -1603,7 +1519,6 @@ namespace AutoCode.Presentation
                 throw ex;
             }
         }
-
         private bool IsColumnDate(string type)
         {
             try
@@ -1626,7 +1541,6 @@ namespace AutoCode.Presentation
                 throw ex;
             }
         }
-
         public string GetColumnTypeForMSSql(string type)
         {
             try
@@ -1681,9 +1595,7 @@ namespace AutoCode.Presentation
             {
                 throw ex;
             }
-
         }
-
         private string GetColumnTypeForPostgreSql(string type)
         {
             try
@@ -1755,15 +1667,4 @@ namespace AutoCode.Presentation
             }
         }
     }
-
-    public class ColumnList
-    {
-        public string ColumnName { set; get; }
-        public string DataType { set; get; }
-        public string IsNullable { set; get; }
-    }
-
-
-   
-
 }

@@ -36,8 +36,6 @@ namespace AutoCode.Presentation
             InitializeComponent();
             this.Loaded += MainWindow_Loaded;
         }
-
-
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
             BusyIndicator.IsBusy = false;
@@ -58,12 +56,10 @@ namespace AutoCode.Presentation
                 txtUserName.Text = "";
             }
         }
-
         private void btnClose_Click(object sender, RoutedEventArgs e)
         {
             App.Current.Shutdown();
         }
-
         private void btnConnectServer_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -118,10 +114,8 @@ namespace AutoCode.Presentation
                             BusyIndicator.IsBusy = true;
                             BusyIndicator.BusyContent = "We are connecting to MSSQL database.";
                             postgreSQLServerBackroundWorker.RunWorkerAsync(posgresSQLParamList);
-
                             break;
                         default:
-
                             break;
                     }
                 }
@@ -135,11 +129,6 @@ namespace AutoCode.Presentation
                         MessageBox.Show("Please Insert Form Name.");
                         return;
                     }
-                    //if (cmbFormType.SelectedIndex == 0)
-                    //{
-                    //    MessageBox.Show("Please select form type.");
-                    //    return;
-                    //}
                     if (string.IsNullOrWhiteSpace(txtFormModel.Text))
                     {
                         MessageBox.Show("Please insert model to generate form.");
@@ -156,7 +145,6 @@ namespace AutoCode.Presentation
                     flutterBackroundWorker.RunWorkerCompleted += FlutterBackroundWorker_RunWorkerCompleted;
                     List<string> flutterParamList = new List<string>();
                     flutterParamList.Add(txtFormName.Text.Trim());
-                    //flutterParamList.Add(cmbFormType.SelectedIndex.ToString());
                     flutterParamList.Add(JsonConvert.SerializeObject(properties));
                     BusyIndicator.IsBusy = true;
                     BusyIndicator.BusyContent = "Loading...";
@@ -172,11 +160,6 @@ namespace AutoCode.Presentation
                         MessageBox.Show("Please Insert Form Name.");
                         return;
                     }
-                    //if (cmbFormType1.SelectedIndex == 0)
-                    //{
-                    //    MessageBox.Show("Please select form type.");
-                    //    return;
-                    //}
                     if (string.IsNullOrWhiteSpace(txtFormModel1.Text))
                     {
                         MessageBox.Show("Please insert model to generate form.");
@@ -193,7 +176,6 @@ namespace AutoCode.Presentation
                     angularBackroundWorker.RunWorkerCompleted += AngularBackroundWorker_RunWorkerCompleted;
                     List<string> angularParamList = new List<string>();
                     angularParamList.Add(txtFormName1.Text.Trim());
-                    //angularParamList.Add(cmbFormType1.SelectedIndex.ToString());
                     angularParamList.Add(JsonConvert.SerializeObject(properties));
                     BusyIndicator.IsBusy = true;
                     BusyIndicator.BusyContent = "Loading...";
@@ -204,9 +186,7 @@ namespace AutoCode.Presentation
             {
                 MessageBox.Show(ex.Message);
             }
-
         }
-
         private List<FieldProperties> ExtractProperties(string input)
         {
             List<string> tempProps = input.Split('\n').ToList();
@@ -263,7 +243,6 @@ namespace AutoCode.Presentation
                 if (isSuccess)
                 {
                     MessageBox.Show("Database Connection Established.");
-                    //MessageBox.Show(SettingHelper.SqlConnectionStringBuilder.ConnectionString);
                     DatabaseTableList databaseTableList = new DatabaseTableList();
                     SettingHelper.ConnectionType = Enum.ConnectionType.PostgreSQLServer;
                     this.Hide();
@@ -273,7 +252,6 @@ namespace AutoCode.Presentation
                 else
                 {
                     MessageBox.Show("Database Connection Fail.");
-
                 }
             }
             catch (Exception ex)
@@ -320,7 +298,6 @@ namespace AutoCode.Presentation
                 if (isSuccess)
                 {
                     MessageBox.Show("Database Connection Established.");
-                    //MessageBox.Show(SettingHelper.SqlConnectionStringBuilder.ConnectionString);
                     DatabaseTableList databaseTableList = new DatabaseTableList();
                     SettingHelper.ConnectionType = Enum.ConnectionType.MicrosoftSQLServer;
                     this.Hide();
@@ -330,12 +307,10 @@ namespace AutoCode.Presentation
                 else
                 {
                     MessageBox.Show("Database Connection Fail.");
-
                 }
             }
             catch (Exception ex)
             {
-
                 throw ex;
             }
         }
@@ -387,13 +362,11 @@ namespace AutoCode.Presentation
                     UserID = sqlUserName,
                     Password = sqlPassword
                 };
-
                 SqlConnection conn = new SqlConnection(SettingHelper.SqlConnectionStringBuilder.ConnectionString);
                 conn.Open();
                 conn.Close();
                 conn.Dispose();
                 e.Result = true;
-
             }
             catch (Exception)
             {
@@ -410,7 +383,6 @@ namespace AutoCode.Presentation
             List<string> angularParamList = e.Argument as List<string>;
             e.Result = angularParamList;
         }
-
         private static readonly Regex _regexForOnlyNumeric = new Regex("[^0-9.-]+"); //regex that matches disallowed text
         private static bool IsTextAllowed(string text)
         {
@@ -420,6 +392,5 @@ namespace AutoCode.Presentation
         {
             e.Handled = !IsTextAllowed(e.Text);
         }
-
     }
 }

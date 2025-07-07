@@ -15,7 +15,6 @@ namespace AutoCode.Presentation
     {
         private static readonly ILog log = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         private string FormName { get; set; }
-        //private string FormType { get; set; }
         private ObservableCollection<FieldProperties> Fields { get; set; }
         public List<string> FieldTypes { get; set; }
         public AngularForm(List<string> angularParamList)
@@ -27,7 +26,6 @@ namespace AutoCode.Presentation
                 if (angularParamList.Count > 1)
                 {
                     this.FormName = angularParamList[0];
-                    //this.FormType = angularParamList[1];
                     this.Fields = JsonConvert.DeserializeObject<ObservableCollection<FieldProperties>>(angularParamList[1]);
                     setFieldValues();
                     dataGrid.ItemsSource = this.Fields;
@@ -35,8 +33,6 @@ namespace AutoCode.Presentation
                 {
                     "TextBox","Number","email","Dropdown", "RadioButton", "CheckBox", "Calendar"
                 };
-                    //if (this.FormType != "2")
-                    //    stackActions.Visibility = Visibility.Collapsed;
                 }
                 this.DataContext = this;
             }
@@ -67,21 +63,6 @@ namespace AutoCode.Presentation
                     //create list
                     txtBlockListCode.Text = generateTable();
                 }
-                //else
-                //{
-                //    txtBlockCode.Text = string.Empty;
-                //    txtBlockListCode.Text = string.Empty;
-                //}
-                //if (this.FormType == "1")
-                //{
-                //    //create form
-                //    txtBlockCode.Text = generateForm();
-                //}
-                //else if (this.FormType == "2")
-                //{
-                //    //create list
-                //    txtBlockCode.Text = generateList();
-                //}
             }
             catch (Exception ex)
             {
@@ -89,7 +70,6 @@ namespace AutoCode.Presentation
                 MessageBox.Show(ex.Message);
             }
         }
-
         private void setFieldValues()
         {
             foreach (var field in this.Fields)
@@ -97,21 +77,13 @@ namespace AutoCode.Presentation
                 //textbox check
                 if (field.Type.IndexOf("string", StringComparison.OrdinalIgnoreCase) >= 0
                     || field.Type.IndexOf("char", StringComparison.OrdinalIgnoreCase) >= 0)
-                    //|| field.Type.IndexOf("int", StringComparison.OrdinalIgnoreCase) >= 0
-                    //|| field.Type.IndexOf("long", StringComparison.OrdinalIgnoreCase) >= 0
-                    //|| field.Type.IndexOf("float", StringComparison.OrdinalIgnoreCase) >= 0
-                    //|| field.Type.IndexOf("double", StringComparison.OrdinalIgnoreCase) >= 0)
-                    //if (this.FormType == "2")
-                    //    field.FieldType = "Label";
-
                     field.FieldType = "TextBox";
                 //for number value
-                else if(field.Type.IndexOf("int", StringComparison.OrdinalIgnoreCase) >= 0
+                else if (field.Type.IndexOf("int", StringComparison.OrdinalIgnoreCase) >= 0
                     || field.Type.IndexOf("long", StringComparison.OrdinalIgnoreCase) >= 0
                     || field.Type.IndexOf("float", StringComparison.OrdinalIgnoreCase) >= 0
                     || field.Type.IndexOf("double", StringComparison.OrdinalIgnoreCase) >= 0)
                     field.FieldType = "Number";
-                
                 //checkbox check
                 else if (field.Type.IndexOf("bool", StringComparison.OrdinalIgnoreCase) >= 0)
                     field.FieldType = "CheckBox";
@@ -124,18 +96,9 @@ namespace AutoCode.Presentation
                 else
                     field.FieldType = "TextBox";
                 //email check
-                if(field.Name.IndexOf("email", StringComparison.OrdinalIgnoreCase) >= 0)
+                if (field.Name.IndexOf("email", StringComparison.OrdinalIgnoreCase) >= 0)
                     field.FieldType = "email";
             }
-        }
-
-        private static string labelCreater(string label)
-        {
-            string result = Regex.Replace(label, "(?<=[a-z])(?=[A-Z])", " ");
-            result = char.ToUpper(result[0]) + result.Substring(1);
-            return result;
-            //Regex.Replace(label, "(?<=[a-z])(?=[A-Z])", " ");
-            //Regex.Replace(label, "([a-z])([A-Z])", "$1 $2");
         }
         private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -154,12 +117,10 @@ namespace AutoCode.Presentation
                 }
             }
         }
-
         private void listCheckBox_Checked(object sender, RoutedEventArgs e)
         {
             stackActions.Visibility = Visibility.Visible;
         }
-
         private void listCheckBox_Unchecked(object sender, RoutedEventArgs e)
         {
             stackActions.Visibility = Visibility.Collapsed;
@@ -172,7 +133,6 @@ namespace AutoCode.Presentation
             {
                 // Get the DataGridRow that contains this button
                 var row = DataGridRow.GetRowContainingElement(button);
-
                 // Retrieve the item (data object) from the row's DataContext
                 var item = row.DataContext as FieldProperties;
                 if (item != null)
@@ -187,7 +147,6 @@ namespace AutoCode.Presentation
                 }
             }
         }
-
         //----Form Code Generater Function------
         private string generateForm()
         {
@@ -416,33 +375,11 @@ namespace AutoCode.Presentation
                     $"   //     this._errorService.errorHandle(error);\r\n " +
                     $"   //   }}\r\n    // );");
                 builder.AppendLine($"}}");
-
-
                 builder.AppendLine("-------------------------------- End Add Form Java Script Code ------------------------------------\n\n");
-
-
                 //Code for Update Form-------------
-
                 builder.AppendLine("---------------------------Your Update Form HTML Code Starts Here -------------------------------\n\n");
-
                 builder.AppendLine("----Update Form HTML Code same as Add Form Code because All fields are same ----\n\n");
-                //bool update = false;
-                //foreach (var field in this.Fields)
-                //{
-                //    if(field.IsDisable == true)
-                //    {
-                //        update = true;
-                //    }
-                //}
-                //if (update == false)
-                //{
-                //    builder.AppendLine("----Update Form HTML Code same as Add Form Code because All fields are same ----\n\n");
-                //}
-
-
                 builder.AppendLine("------------------------------Your Update Form's Java Script's Code Starts Here-----------------------\n\n");
-
-
                 builder.AppendLine(
                     "import {Component} from '@angular/core';\n" +
                     "import { FormControl, FormGroup, Validators }");
@@ -453,7 +390,6 @@ namespace AutoCode.Presentation
                 builder.AppendLine($"  constructor() {{\r\n    // private _loadingService: LoadingService,\r\n   " +
                     $" // private _toasterService: ToastrService,\r\n    // private _errorService: ErrorService,\r\n  " +
                     $"  // private _apiService: ApiService\r\n  }}");
-
                 //ngOnInit() function
                 builder.AppendLine($" ngOnInit() {{\r\n    this.getFormData();\r\n  }}");
 
@@ -497,11 +433,9 @@ namespace AutoCode.Presentation
                     $"   //     this._errorService.errorHandle(error);\r\n " +
                     $"   //   }}\r\n " +
                     $"   // );\r\n  }}");
-
                 builder.AppendLine($"onSubmit() {{");
                 builder.AppendLine($"this.isFormSubmitted = true;");
                 builder.AppendLine($"if (this.myForm.invalid) {{\r\n      return;\r\n    }}");
-
                 //API Code Commented
                 builder.AppendLine($"    console.log(this.myForm.value);\r\n\r\n " +
                     $"   // this._loadingService.displayLoader(true);\r\n  " +
@@ -517,17 +451,12 @@ namespace AutoCode.Presentation
                     $"   //     this._errorService.errorHandle(error);\r\n " +
                     $"   //   }}\r\n    // );");
                 builder.AppendLine($"}}");
-
-
                 builder.AppendLine("-------------------------------- End Update form Java Script Code ------------------------------------\n\n");
-
                 builder.AppendLine("--------------------------------Global CSS ------------------------------------\n\n");
-
                 builder.AppendLine($".is-invalid " +
                     $"{{\r\n  border: 1px solid red;\r\n}}" +
                     $"\r\n\r\n.error " +
                     $"{{\r\n  color: #ff0000;\r\n}}");
-
                 builder.AppendLine("-------------------------------------------- End Code --------------------------------------------------------\n\n");
                 return builder.ToString();
             }
@@ -536,74 +465,6 @@ namespace AutoCode.Presentation
                 throw ex;
             }
         }
-
-        //table generated by sir
-        private string generateList()
-        {
-            try
-            {
-                StringBuilder classBuilder = new StringBuilder();
-                classBuilder.AppendLine("------------------------------------- Start List Code -----------------------------------------");
-                classBuilder.AppendLine($"<div *ngIf=\"!IsDataFound\">\r\n\tNo Data Found\r\n</div>");
-                classBuilder.AppendLine("<div class=\"row\" *ngIf=\"IsDataFound\">");
-                classBuilder.AppendLine("\t<div class=\"col-12\">");
-                classBuilder.AppendLine($"\t\t<h3>{this.FormName}</h3>");
-                classBuilder.AppendLine("\t</div>");
-                classBuilder.AppendLine("</div>");
-                classBuilder.AppendLine("<div class=\"row\" *ngIf=\"IsDataFound\">>");
-                classBuilder.AppendLine($"\t<table id=\"tbl{this.FormName}\" class=\"col-12\">");
-                classBuilder.AppendLine("\t\t<tr class=\"row\">");
-                classBuilder.AppendLine($"\t\t\t<th class=\"col-auto\" *ngFor=\"let header of {this.FormName}Headers; let i = index\" (click)=\"header.Sortable && Sort(header.SortableFieldName, header.SortableFieldDirection)\">");
-                classBuilder.AppendLine("\t\t\t\t<span>{{header.DisplayColumnName}}</span>");
-                classBuilder.AppendLine("\t\t\t\t<span *ngIf=\"header.Sortable\"><i class=\"fa-thin fa-sort\"></i></span>");
-                classBuilder.AppendLine("\t\t\t</th>");
-                if ((bool)chkAllowEdit.IsChecked || (bool)chkAllowDelete.IsChecked)
-                {
-                    classBuilder.AppendLine($"\t\t\t<th class=\"col-auto\">");
-                    classBuilder.AppendLine("\t\t\t\t<span>Action(s)</span>");
-                    classBuilder.AppendLine("\t\t\t</th>");
-                }
-                classBuilder.AppendLine("\t\t</tr>");
-                classBuilder.AppendLine($"\t\t<tr class=\"col-12\" *ngFor=\"let item of {this.FormName}List; let i = index\">");
-                foreach (var field in this.Fields)
-                {
-                    classBuilder.AppendLine("\t\t\t<td class=\"col-auto\">");
-                    classBuilder.Append("\t\t\t\t<span>{{");
-                    classBuilder.Append($"item.{field.Name}");
-                    classBuilder.AppendLine("}}</span>");
-                    classBuilder.AppendLine("\t\t\t</td>");
-                }
-                if ((bool)chkAllowEdit.IsChecked || (bool)chkAllowDelete.IsChecked)
-                {
-                    classBuilder.AppendLine($"\t\t\t<td class=\"col-auto\">");
-                    if ((bool)chkAllowEdit.IsChecked)
-                        classBuilder.AppendLine($"\t\t\t\t<a *ngIf=\"EditAllow\" (click)=\"OnEditRow(item, i)\"><span class=\"fa fa-edit\" title=\"Edit\"></span></a>");
-                    if ((bool)chkAllowDelete.IsChecked)
-                        classBuilder.AppendLine($"\t\t\t\t<a *ngIf=\"DeleteAllow\" (click)=\"OnDeleteRow(item, i)\"><span class=\"fa fa-trash\" title=\"Delete\"></span></a>");
-                    classBuilder.AppendLine("\t\t\t</td>");
-                }
-                classBuilder.AppendLine("\t\t</tr>");
-                classBuilder.AppendLine("\t</table>");
-                if ((bool)chkAllowPagination.IsChecked)
-                {
-                    classBuilder.AppendLine("\t<div *ngIf=\"IsDataFound\" style=\"display: flex; justify-content: center; align-items: center;\">");
-                    classBuilder.AppendLine("\t\t<a *ngIf=\"TotalPages>1 && CurrentPageIndex!=1\" (click)=\"OnPageIndexChange(1)\"><i class=\"fa fa-angle-double-left\"></i></a>");
-                    classBuilder.AppendLine("\t\t<a *ngIf=\"TotalPages>1 && CurrentPageIndex!=1\" (click)=\"OnPageIndexChange(CurrentPageIndex-1)\"><i class=\"fa fa-angle-left\"></i></a>");
-                    classBuilder.AppendLine("\t\t<a>{{CurrentPageIndex}}</a>");
-                    classBuilder.AppendLine("\t\t<a *ngIf=\"TotalPages>1 && CurrentPageIndex!=TotalPages\" (click)=\"OnPageIndexChange(CurrentPageIndex+1)\"><i class=\"fa fa-angle-right\"></i></a>");
-                    classBuilder.AppendLine("\t\t<a *ngIf=\"TotalPages>1 && CurrentPageIndex!=TotalPages\" (click)=\"OnPageIndexChange(TotalPages)\"><i class=\"fa fa-angle-double-right\"></i></a>");
-                    classBuilder.AppendLine("\t</div>");
-                }
-                classBuilder.AppendLine("</div>");
-                classBuilder.AppendLine("------------------------------------ End List Code -----------------------------------\n\n\n");
-                return classBuilder.ToString();
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-        }
-
         //----Table Code Generater Function------
         private string generateTable()
         {
@@ -612,7 +473,6 @@ namespace AutoCode.Presentation
             {
                 //------HTML Code--------
                 table.AppendLine($"--------------------Table HTML Code starts here----------------\n\n");
-
                 table.AppendLine($"<div class=\"pt-2\">");
                 table.AppendLine($"    <div class=\"card\">");
                 table.AppendLine($"      <div class=\"card-header row\">");
@@ -666,17 +526,13 @@ namespace AutoCode.Presentation
                 table.AppendLine($"      </div>");
                 table.AppendLine($"    </div>");
                 table.AppendLine($"</div>\n\n");
-
                 table.AppendLine($"--------------------Table HTML Code End here----------------\n\n\n");
-
                 //------Java Script Code-------
                 table.AppendLine($"--------------------Table Java Script Code Starts here----------------\n\n\n");
-
                 table.AppendLine($"  @ViewChild(AutoGridComponent) private _AutoGrid!: AutoGridComponent;");
                 table.AppendLine($" public AutoGridPaging: Paging = new Paging();");
                 table.AppendLine($" public DataTableEditLink = '/user-edit';");
                 table.AppendLine($"  public TableHeader: any = [");
-                
                 //---------generate columns----------
                 foreach (var field in Fields)
                 {
@@ -685,13 +541,9 @@ namespace AutoCode.Presentation
                         table.AppendLine($"    {{");
                         table.AppendLine($"      colName: '{field.Name}',");
                         if (field.IsSortable)
-                        {
                             table.AppendLine($"      sortable: true,");
-                        }
                         else
-                        {
                             table.AppendLine($"      sortable: false,");
-                        }
                         table.AppendLine($"      sortableFieldName: '{field.Name}',");
                         table.AppendLine($"      colDisplayName: '{field.Label}',");
                         table.AppendLine($"      visible: true,");
@@ -701,7 +553,6 @@ namespace AutoCode.Presentation
                 table.AppendLine($"  ];");
                 table.AppendLine($"  public data = [];");
                 table.AppendLine($"  constructor(private _toasterService: ToastrService) {{}}");
-
                 //ngOnInit() function
                 table.AppendLine($"  ngOnInit() {{\r\n    " +
                     $"this.onInitLoadData(\r\n      " +
@@ -711,7 +562,6 @@ namespace AutoCode.Presentation
                     $"this.AutoGridPaging.SortField,\r\n      " +
                     $"this.AutoGridPaging.SortType\r\n    " +
                     $");\r\n  }}");
-
                 //ngAfterViewInit() function
                 table.AppendLine($"  ngAfterViewInit() {{\r\n    this._AutoGrid.RowDeleted$.subscribe((c) => {{\r\n      " +
                     $"// this._loadingService.displayLoader(true);\r\n      " +
@@ -727,8 +577,6 @@ namespace AutoCode.Presentation
                     $"//     this._errorService.errorHandler(error);\r\n      " +
                     $"//   }}\r\n      " +
                     $"// );\r\n    }});");
-
-
                 //---------this._AutoGrid.SortChanged$.subscribe((c)----------
                 table.AppendLine($"    this._AutoGrid.SortChanged$.subscribe((c) => {{\r\n      " +
                     $"this.AutoGridPaging.SortField = c.SortField;\r\n      " +
@@ -742,7 +590,6 @@ namespace AutoCode.Presentation
                     $"this.AutoGridPaging.SortType\r\n      " +
                     $");\r\n    " +
                     $"}});");
-
                 //-------this._AutoGrid.PageIndexChanged$.subscribe((c)-------
                 table.AppendLine($"    this._AutoGrid.PageIndexChanged$.subscribe((c) => {{\r\n      " +
                     $"if (c != this.AutoGridPaging.PageIndex - 1) {{\r\n        " +
@@ -756,7 +603,6 @@ namespace AutoCode.Presentation
                     $");\r\n      " +
                     $"}} else this._AutoGrid.LoadData([]);\r\n    " +
                     $"}});");
-
                 //--------this._AutoGrid.PageSizeChanged$.subscribe(()------
                 table.AppendLine($"    this._AutoGrid.PageSizeChanged$.subscribe((c) => {{\r\n      " +
                     $"if (c != this.AutoGridPaging.PageSize) {{\r\n        " +
@@ -772,7 +618,6 @@ namespace AutoCode.Presentation
                     $"}} else this._AutoGrid.LoadData([]);\r\n    " +
                     $"}});\r\n  " +
                     $"}}");
-
                 //-------onInitLoadData()--------
                 table.AppendLine($"  onInitLoadData(\r\n    " +
                     $"PageIndex: number,\r\n    " +
@@ -803,9 +648,6 @@ namespace AutoCode.Presentation
                     $"this._AutoGrid.LoadData(this.data);\r\n    " +
                     $"}}, 2000);\r\n  " +
                     $"}}");
-
-
-
                 //-------handleData()------
                 table.AppendLine($"handleData(result: any) {{\r\n    " +
                     $"this.data = result.body.Data;\r\n    " +
@@ -828,7 +670,6 @@ namespace AutoCode.Presentation
                     $"this.AutoGridPaging.SortType = result.body.ResponseParameter.SortType;\r\n    " +
                     $"this._AutoGrid.LoadData(this.data);\r\n  " +
                     $"}}");
-
                 //-----onFilterGrid()------
                 table.AppendLine($" onFilterGrid(tenantForm: any) {{\r\n    " +
                     $"this.AutoGridPaging.SearchText = this.AutoGridPaging.SearchText.trim();\r\n    " +
@@ -845,7 +686,6 @@ namespace AutoCode.Presentation
                     $"this.AutoGridPaging.SortType\r\n    " +
                     $");\r\n  " +
                     $"}}");
-
                 //-------onRefreshFilterGrid()-------
                 table.AppendLine($"  onRefreshFilterGrid() {{\r\n    " +
                     $"this.AutoGridPaging.SearchText = '';\r\n    " +
@@ -858,7 +698,6 @@ namespace AutoCode.Presentation
                     $"this.AutoGridPaging.SortType\r\n    " +
                     $");\r\n  " +
                     $"}} \n\n\n");
-
                 table.AppendLine($"--------------------Table Java Script Code End here----------------\n\n\n");
                 return table.ToString();
             }
@@ -866,9 +705,6 @@ namespace AutoCode.Presentation
             {
                 throw ex;
             }
-
         }
-
-
     }
 }
