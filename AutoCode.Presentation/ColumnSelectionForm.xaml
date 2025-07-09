@@ -1,0 +1,42 @@
+﻿<Window x:Class="AutoCode.Presentation.ColumnSelectionForm"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:AutoCode.Presentation"
+        xmlns:busyIndicator="https://github.com/moh3ngolshani/BusyIndicator"
+        mc:Ignorable="d" Width="500" Height="450"
+        Title="ColumnSelectionForm" WindowStyle="None" ResizeMode="NoResize" WindowStartupLocation="CenterScreen">
+    <busyIndicator:BusyMask x:Name="BusyIndicator" BusyContent="Please wait..." BusyContentMargin="10" IsBusy="False" IndicatorType="Ellipse" IsBusyAtStartup="False" >
+        <Border  BorderThickness="2" Margin="0" BorderBrush="#145DA0" CornerRadius="4" Background="#B1D4E0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"></ColumnDefinition>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto"></RowDefinition>
+                    <RowDefinition Height="auto"></RowDefinition>
+                    <!--<RowDefinition Height="auto"></RowDefinition>-->
+                    <RowDefinition Height="*"></RowDefinition>
+                    <RowDefinition Height="auto"></RowDefinition>
+                    <RowDefinition Height="auto"></RowDefinition>
+                </Grid.RowDefinitions>
+                <Label Content="Select Columns to Generate Code" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Column="0" Grid.Row="0" Style="{StaticResource LabelRegular}" FontSize="20"></Label>
+                <Border  BorderThickness="1" Margin="0" BorderBrush="#145DA0" CornerRadius="0" Background="#B1D4E0"  Grid.Column="0" Grid.Row="1" ></Border>
+                <!--<StackPanel Orientation="Horizontal" Grid.Row="2" Grid.Column="0" HorizontalAlignment="Center" Margin="0 5">
+                    <CheckBox Content="Check All" x:Name="CheckAll" Checked="CheckAll_Checked"/>
+                    <CheckBox Content="UnCheck All" x:Name="UnCheckAll" Margin="10 0" Checked="UnCheckAll_Checked"/>
+                </StackPanel>-->
+                <ScrollViewer  Width="450" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Column="0" Grid.Row="2" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Margin="10">
+                    <StackPanel x:Name="CheckBoxContainer"/>
+                </ScrollViewer>
+                <Border  BorderThickness="1" Margin="0" BorderBrush="#145DA0" CornerRadius="0" Background="#B1D4E0"  Grid.Column="0" Grid.Row="3" ></Border>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Grid.Column="0" Grid.Row="4">
+                    <Button x:Name="btnConnectServer" Style="{StaticResource ButtonRegular}"  Margin="0,10" Click="btnConnectServer_Click">Save</Button>
+                    <Button x:Name="btnClose" Style="{StaticResource ButtonRegular}" Margin="10,10" Click="btnClose_Click">Close</Button>
+                </StackPanel>
+
+            </Grid>
+        </Border>
+    </busyIndicator:BusyMask>
+</Window>

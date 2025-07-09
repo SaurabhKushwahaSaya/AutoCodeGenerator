@@ -48,7 +48,7 @@
                     <!--Table's DropDown-->
                     <StackPanel Orientation="Horizontal" Grid.Column="0"  Grid.Row="0" Grid.RowSpan="2" >
                         <Label x:Name="serverType"   Style="{StaticResource LabelRegular}" Margin="10,0,0,0" VerticalAlignment="Center" >Select Table:</Label>
-                        <ComboBox x:Name="cmbTable" Style="{StaticResource ComboBoxRegular}" Width="200" Margin="0" VerticalAlignment="Center" >
+                        <ComboBox x:Name="cmbTable" SelectionChanged="cmbTable_SelectionChanged" Style="{StaticResource ComboBoxRegular}" Width="200" Margin="0" VerticalAlignment="Center" >
                         </ComboBox>
                     </StackPanel>
                     <!--Check Box for Select object-->

@@ -1,4 +1,5 @@
 ﻿using AutoCode.Presentation.Helpers;
+using Newtonsoft.Json;
 using Npgsql;
 using System;
 using System.Collections;
@@ -37,12 +38,6 @@ namespace AutoCode.Presentation.DatabaseUtils
                 return SQLReader;
             }
         }
-
-
-
-
-
-
         /// <summary>
         /// Execute as DataReader.
         /// </summary>
@@ -434,7 +429,6 @@ namespace AutoCode.Presentation.DatabaseUtils
         {
             using (NpgsqlConnection conn = new NpgsqlConnection(ConnectionString))
             {
-
                 NpgsqlCommand command = new NpgsqlCommand();
                 command.Connection = conn;
                 command.CommandText = storedProcedureName;
@@ -453,11 +447,42 @@ namespace AutoCode.Presentation.DatabaseUtils
                 else
                     return default(T);
             }
-
-
         }
 
+        //public string Select(string spName, List<NpgsqlParameter> parameters)
+        //{
+        //    try
+        //    {
+        //        DataSet ds = new DataSet();
+        //        using (NpgsqlConnection conn = new NpgsqlConnection(ConnectionString))
+        //        {
+        //            conn.Open();
+        //            if (conn == null)
+        //                throw new ArgumentNullException("connection");
 
+        //            string functionCommand = "Select * from " + spName + "(" + string.Join(", ", parameters.Select(p => "@" + p.ParameterName)) + ")";
+        //            using (NpgsqlCommand command = new NpgsqlCommand(functionCommand, conn))
+        //            {
+        //                command.CommandType = CommandType.Text;
+        //                foreach (var param in parameters)
+        //                    command.Parameters.AddWithValue(param.ParameterName, param.Value);
+
+        //                NpgsqlDataAdapter da = new NpgsqlDataAdapter(command);
+        //                da.Fill(ds);
+        //            }
+        //            string JSONString = JsonConvert.SerializeObject(ds, Formatting.Indented);
+        //            return JSONString;
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        throw ex;
+        //    }
+        //    finally
+        //    {
+        //        UpdateSPExecutionCount(spName);
+        //    }
+        //}
 
         /// <summary>
         /// Execute as object.

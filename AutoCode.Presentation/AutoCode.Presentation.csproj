@@ -84,6 +84,9 @@
     <Compile Include="AngularForm.xaml.cs">
       <DependentUpon>AngularForm.xaml</DependentUpon>
     </Compile>
+    <Compile Include="ColumnSelectionForm.xaml.cs">
+      <DependentUpon>ColumnSelectionForm.xaml</DependentUpon>
+    </Compile>
     <Compile Include="DatabaseTableList.xaml.cs">
       <DependentUpon>DatabaseTableList.xaml</DependentUpon>
     </Compile>
@@ -98,6 +101,10 @@
     <Compile Include="Helpers\SettingHelper.cs" />
     <Compile Include="DatabaseUtils\SqlHelper.cs" />
     <Page Include="AngularForm.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="ColumnSelectionForm.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
