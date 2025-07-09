@@ -27,9 +27,6 @@ namespace AutoCode.Presentation
     /// </summary>
     public partial class DatabaseTableList : Window
     {
-        Dictionary<string, Tuple<string, bool, bool>> TableColumnList = new Dictionary<string, Tuple<string, bool, bool>>();
-        string primaryKeyOfTable = string.Empty;
-        string tableName = string.Empty;
         public DatabaseTableList()
         {
             InitializeComponent();
@@ -133,6 +130,13 @@ namespace AutoCode.Presentation
             }
         }
         #endregion
+
+        private void cmbTable_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            GetTempTableColumns();
+            ColumnSelectionForm columnSelectionForm = new ColumnSelectionForm();
+            columnSelectionForm.ShowDialog();
+        }
         private void btnClose_Click(object sender, RoutedEventArgs e)
         {
             this.Close();
@@ -141,8 +145,6 @@ namespace AutoCode.Presentation
         {
             try
             {
-                TableColumnList = new Dictionary<string, Tuple<string, bool, bool>>();
-                primaryKeyOfTable = string.Empty;
                 txtBlockCode.Clear();
                 txtBlockSp.Clear();
                 if (cmbTable.SelectedValue == null || string.IsNullOrEmpty(cmbTable.SelectedValue.ToString().Trim()))
@@ -150,58 +152,11 @@ namespace AutoCode.Presentation
                     MessageBox.Show("Please Select Table.");
                     return;
                 }
-                tableName = cmbTable.SelectedValue.ToString();
-                if (SettingHelper.ConnectionType == Enum.ConnectionType.MicrosoftSQLServer)
+                if (SettingHelper.TableColumnList.Count <= 0 || SettingHelper.TableColumnList == null)
                 {
-                    string getAllColumnNames = string.Format(" SELECT COLUMN_NAME,DATA_TYPE ,IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'{0}'", tableName);
-                    DataTable dt = SqlHelper.ExecuteDataTable(SettingHelper.SqlConnectionStringBuilder.ConnectionString, CommandType.Text, getAllColumnNames);
-
-                    string getPrimaryKeyColumnName = string.Format("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE TABLE_NAME = '{0}' AND  CONSTRAINT_NAME like'PK_%'", tableName);
-                    DataTable primaryKeyDt = SqlHelper.ExecuteDataTable(SettingHelper.SqlConnectionStringBuilder.ConnectionString, CommandType.Text, getPrimaryKeyColumnName);
-                    if (primaryKeyDt.Rows.Count == 1)
-                        primaryKeyOfTable = primaryKeyDt.Rows[0].ToString();
-                    else
-                        primaryKeyOfTable = string.Empty;
-                    foreach (DataRow dr in dt.Rows)
-                    {
-                        string columnName = dr[0].ToString();
-                        string columnType = dr[1].ToString();
-                        bool isNullable = dr[2].ToString().Trim().ToLower() == "YES".Trim().ToLower();
-                        bool isPrimaryKey = dr[0].ToString().ToLower().Trim() == primaryKeyOfTable.ToLower().Trim();
-                        TableColumnList.Add(dr[0].ToString(), new Tuple<string, bool, bool>(columnType, isNullable, isPrimaryKey));
-                    }
+                    MessageBox.Show("Please Select Columns to Generate Code or SP.");
+                    return;
                 }
-                else if (SettingHelper.ConnectionType == Enum.ConnectionType.PostgreSQLServer)
-                {
-                    PostgreSQLHandler postgreSQLHandler = new PostgreSQLHandler();
-                    string getPrimaryColumnName = string.Format("select kcu.column_name as key_column from information_schema.table_constraints tco join information_schema.key_column_usage kcu on kcu.constraint_name = tco.constraint_name and kcu.constraint_schema = tco.constraint_schema and kcu.constraint_name = tco.constraint_name where tco.constraint_type = 'PRIMARY KEY' and  kcu.table_name = '{0}' ", tableName);
-                    DataSet primaryKeyDs = postgreSQLHandler.ExecuteAsDataSet(getPrimaryColumnName);
-                    if (primaryKeyDs != null && primaryKeyDs.Tables.Count > 0)
-                    {
-                        if (primaryKeyDs.Tables[0] != null && primaryKeyDs.Tables[0].Rows.Count == 1)
-                            primaryKeyOfTable = primaryKeyDs.Tables[0].Rows[0][0].ToString();
-                        else
-                            primaryKeyOfTable = string.Empty;
-
-                    }
-                    string getAllColumnNames = string.Format("select column_name as ColumnName, data_type as DataType  , is_nullable as IsNullable  FROM information_schema.columns WHERE table_name = '{0}'", tableName);
-                    DataSet allColumnNamesDS = postgreSQLHandler.ExecuteAsDataSet(getAllColumnNames);
-                    if (allColumnNamesDS != null && allColumnNamesDS.Tables.Count > 0)
-                    {
-                        if (allColumnNamesDS.Tables[0] != null && allColumnNamesDS.Tables[0].Rows.Count > 0)
-                        {
-                            foreach (DataRow dr in allColumnNamesDS.Tables[0].Rows)
-                            {
-                                string columnName = dr[0].ToString();
-                                string columnType = dr[1].ToString();
-                                bool isNullable = dr[2].ToString().Trim().ToLower() == "YES".Trim().ToLower();
-                                bool isPrimaryKey = dr[0].ToString().ToLower().Trim() == primaryKeyOfTable.ToLower().Trim();
-                                TableColumnList.Add(dr[0].ToString(), new Tuple<string, bool, bool>(columnType, isNullable, isPrimaryKey));
-                            }
-                        }
-                    }
-                }
-
                 if (chkObjModel.IsChecked.Value)
                 {
 
@@ -263,7 +218,7 @@ namespace AutoCode.Presentation
                     if (chkCRUDSelectAll.IsChecked.Value)
                     {
                         txtBlockCode.Text = txtBlockCode.Text + GetPaginationModelCode();
-                        txtBlockCode.Text = txtBlockCode.Text + GetPaginationDataListModelCode(tableName);
+                        txtBlockCode.Text = txtBlockCode.Text + GetPaginationDataListModelCode(SettingHelper.tableName);
                         txtBlockCode.Text = txtBlockCode.Text + GenerateSelectAllRecordWithPagination();
                     }
                     if (getList.IsChecked.Value)
@@ -277,6 +232,75 @@ namespace AutoCode.Presentation
                 MessageBox.Show(ex.Message);
             }
         }
+        private void GetTempTableColumns()
+        {
+            try
+            {
+                SettingHelper.Temp_TableColumnList = new Dictionary<string, Tuple<string, bool, bool>>();
+                SettingHelper.Temp_primaryKeyOfTable = string.Empty;
+                SettingHelper.Temp_tableName = string.Empty;
+                DataTable dt = new DataTable();
+                DataTable primaryKeyDt = new DataTable();
+                DataSet primaryKeyDs = new DataSet();
+                DataSet allColumnNamesDS = new DataSet();
+                SettingHelper.Temp_tableName = cmbTable.SelectedValue.ToString();
+                if (SettingHelper.ConnectionType == Enum.ConnectionType.MicrosoftSQLServer)
+                {
+                    string getAllColumnNames = string.Format(" SELECT COLUMN_NAME,DATA_TYPE ,IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'{0}'", SettingHelper.Temp_tableName);
+                    dt = SqlHelper.ExecuteDataTable(SettingHelper.SqlConnectionStringBuilder.ConnectionString, CommandType.Text, getAllColumnNames);
+
+                    string getPrimaryKeyColumnName = string.Format("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE TABLE_NAME = '{0}' AND  CONSTRAINT_NAME like'PK_%'", SettingHelper.Temp_tableName);
+                    primaryKeyDt = SqlHelper.ExecuteDataTable(SettingHelper.SqlConnectionStringBuilder.ConnectionString, CommandType.Text, getPrimaryKeyColumnName);
+                    if (primaryKeyDt.Rows.Count == 1)
+                        SettingHelper.Temp_primaryKeyOfTable = primaryKeyDt.Rows[0].ToString();
+                    else
+                        SettingHelper.Temp_primaryKeyOfTable = string.Empty;
+                    foreach (DataRow dr in dt.Rows)
+                    {
+                        string columnName = dr[0].ToString();
+                        string columnType = dr[1].ToString();
+                        bool isNullable = dr[2].ToString().Trim().ToLower() == "YES".Trim().ToLower();
+                        bool isPrimaryKey = dr[0].ToString().ToLower().Trim() == SettingHelper.Temp_primaryKeyOfTable.ToLower().Trim();
+                        SettingHelper.Temp_TableColumnList.Add(dr[0].ToString(), new Tuple<string, bool, bool>(columnType, isNullable, isPrimaryKey));
+                    }
+                }
+                else if (SettingHelper.ConnectionType == Enum.ConnectionType.PostgreSQLServer)
+                {
+                    PostgreSQLHandler postgreSQLHandler = new PostgreSQLHandler();
+                    string getPrimaryColumnName = string.Format("select kcu.column_name as key_column from information_schema.table_constraints tco join information_schema.key_column_usage kcu on kcu.constraint_name = tco.constraint_name and kcu.constraint_schema = tco.constraint_schema and kcu.constraint_name = tco.constraint_name where tco.constraint_type = 'PRIMARY KEY' and  kcu.table_name = '{0}' ", SettingHelper.Temp_tableName);
+                    primaryKeyDs = postgreSQLHandler.ExecuteAsDataSet(getPrimaryColumnName);
+                    if (primaryKeyDs != null && primaryKeyDs.Tables.Count > 0)
+                    {
+                        if (primaryKeyDs.Tables[0] != null && primaryKeyDs.Tables[0].Rows.Count == 1)
+                            SettingHelper.Temp_primaryKeyOfTable = primaryKeyDs.Tables[0].Rows[0][0].ToString();
+                        else
+                            SettingHelper.Temp_primaryKeyOfTable = string.Empty;
+
+                    }
+                    string getAllColumnNames = string.Format("select column_name as ColumnName, data_type as DataType  , is_nullable as IsNullable  FROM information_schema.columns WHERE table_name = '{0}'", SettingHelper.Temp_tableName);
+                    allColumnNamesDS = postgreSQLHandler.ExecuteAsDataSet(getAllColumnNames);
+                    if (allColumnNamesDS != null && allColumnNamesDS.Tables.Count > 0)
+                    {
+                        if (allColumnNamesDS.Tables[0] != null && allColumnNamesDS.Tables[0].Rows.Count > 0)
+                        {
+                            foreach (DataRow dr in allColumnNamesDS.Tables[0].Rows)
+                            {
+                                string columnName = dr[0].ToString();
+                                string columnType = dr[1].ToString();
+                                bool isNullable = dr[2].ToString().Trim().ToLower() == "YES".Trim().ToLower();
+                                bool isPrimaryKey = dr[0].ToString().ToLower().Trim() == SettingHelper.Temp_primaryKeyOfTable.ToLower().Trim();
+                                SettingHelper.Temp_TableColumnList.Add(dr[0].ToString(), new Tuple<string, bool, bool>(columnType, isNullable, isPrimaryKey));
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+
+                throw ex;
+            }
+        }
         #region Generate Model Code C#
         private string GenerateModelCode()
         {
@@ -284,12 +308,12 @@ namespace AutoCode.Presentation
             try
             {
                 StringBuilder classBuilder = new StringBuilder();
-                classBuilder.AppendLine("--------------------------------------------------------------- Start Model Code ----------------------------------------------------------------------");
+                classBuilder.AppendLine("---------------------------------- Start Model Code ----------------------------------");
                 classBuilder.AppendLine("using System;");
                 classBuilder.AppendLine();
-                classBuilder.AppendLine($"public class {tableName}");
+                classBuilder.AppendLine($"public class {SettingHelper.tableName}");
                 classBuilder.AppendLine("{");
-                foreach (var item in TableColumnList)
+                foreach (var item in SettingHelper.TableColumnList)
                 {
                     string columnName = item.Key;
                     string dataType = string.Empty;
@@ -307,7 +331,7 @@ namespace AutoCode.Presentation
                     }
                 }
                 classBuilder.AppendLine("}");
-                classBuilder.AppendLine("--------------------------------------------------------------- End Model Code ----------------------------------------------------------------------");
+                classBuilder.AppendLine("---------------------------------- End Model Code ----------------------------------");
                 classBuilder.AppendLine("");
                 return classBuilder.ToString();
             }
@@ -334,7 +358,7 @@ namespace AutoCode.Presentation
                     classBuilder.AppendLine("SET QUOTED_IDENTIFIER ON");
                     classBuilder.AppendLine("GO");
                     classBuilder.AppendLine("");
-                    classBuilder.AppendLine($"CREATE PROCEDURE [{tableName}_Insert]");
+                    classBuilder.AppendLine($"CREATE PROCEDURE [{SettingHelper.tableName}_Insert]");
                     classBuilder.AppendLine("");
                     classBuilder.AppendLine("");
                     classBuilder.AppendLine("");
@@ -342,12 +366,12 @@ namespace AutoCode.Presentation
                     insertBuilder.AppendLine($"AS");
                     insertBuilder.AppendLine($"BEGIN");
                     insertBuilder.AppendLine($"SET NOCOUNT ON;");
-                    insertBuilder.AppendLine($"INSERT INTO [{tableName}]");
+                    insertBuilder.AppendLine($"INSERT INTO [{SettingHelper.tableName}]");
                     valueBuilder.AppendLine($"VALUES");
                     bool isFirstRow = false;
-                    for (int i = 0; i < TableColumnList.Count(); i++)
+                    for (int i = 0; i < SettingHelper.TableColumnList.Count(); i++)
                     {
-                        var item = TableColumnList.ElementAt(i);
+                        var item = SettingHelper.TableColumnList.ElementAt(i);
                         if (!item.Value.Item3)
                         {
                             classBuilder.AppendLine(GetParameterForStoreProcedureForSQL(item.Key, item.Value.Item1));
@@ -360,7 +384,7 @@ namespace AutoCode.Presentation
                             }
                             else
                             {
-                                if (i == TableColumnList.Count() - 1)
+                                if (i == SettingHelper.TableColumnList.Count() - 1)
                                 {
                                     insertBuilder.AppendLine($",[{item.Key}])");
                                     valueBuilder.AppendLine($",@{item.Key})");
@@ -380,13 +404,13 @@ namespace AutoCode.Presentation
                 else if (SettingHelper.ConnectionType == Enum.ConnectionType.PostgreSQLServer)
                 {
                     classBuilder.AppendLine("---------------------------------- Start Insert SP Code ----------------------------------");
-                    classBuilder.Append($"CREATE OR REPLACE FUNCTION public.{tableName.ToLower()}_add(");
-                    insertBuilder.Append($"\tINSERT INTO \"{tableName}\"(");
+                    classBuilder.Append($"CREATE OR REPLACE FUNCTION public.{SettingHelper.tableName.ToLower()}_add(");
+                    insertBuilder.Append($"\tINSERT INTO \"{SettingHelper.tableName}\"(");
                     valueBuilder.Append($"\tValues (");
                     bool isFirstRow = false;
-                    for (int i = 0; i < TableColumnList.Count(); i++)
+                    for (int i = 0; i < SettingHelper.TableColumnList.Count(); i++)
                     {
-                        var item = TableColumnList.ElementAt(i);
+                        var item = SettingHelper.TableColumnList.ElementAt(i);
                         if (!item.Value.Item3)
                         {
                             if (isFirstRow == false)
@@ -414,7 +438,7 @@ namespace AutoCode.Presentation
                     valueBuilder.Append(");\r\n");
 
                     valueBuilder.AppendLine($"\tGET DIAGNOSTICS affected = ROW_COUNT;\r\n\tIF affected = 1 THEN\r\n \t\tRETURN true;\r\n\tELSE\r\n\t\tRETURN false;\r\n\tEND IF;\r\n  END \r\n $function$\r\n;");
-                    valueBuilder.AppendLine($"---------------------------------- End Insert SP Code ----------------------------------"); 
+                    valueBuilder.AppendLine($"---------------------------------- End Insert SP Code ----------------------------------");
                 }
                 return classBuilder.ToString() + insertBuilder.ToString() + valueBuilder.ToString();
             }
@@ -440,14 +464,14 @@ namespace AutoCode.Presentation
                     classBuilder.AppendLine("SET QUOTED_IDENTIFIER ON");
                     classBuilder.AppendLine("GO");
                     classBuilder.AppendLine("");
-                    classBuilder.AppendLine($"CREATE PROCEDURE [{tableName}_Update]");
+                    classBuilder.AppendLine($"CREATE PROCEDURE [{SettingHelper.tableName}_Update]");
                     classBuilder.AppendLine("");
                     classBuilder.AppendLine("");
 
                     bool appendComma = false;
-                    for (int i = 0; i < TableColumnList.Count(); i++)
+                    for (int i = 0; i < SettingHelper.TableColumnList.Count(); i++)
                     {
-                        var item = TableColumnList.ElementAt(i);
+                        var item = SettingHelper.TableColumnList.ElementAt(i);
                         if (appendComma)
                         {
                             classBuilder.Append(",");
@@ -465,7 +489,7 @@ namespace AutoCode.Presentation
                                 UpdateBuilder.AppendLine($"AS");
                                 UpdateBuilder.AppendLine($"BEGIN");
                                 UpdateBuilder.AppendLine($"SET NOCOUNT ON;");
-                                UpdateBuilder.AppendLine($"UPDATE [{tableName}]");
+                                UpdateBuilder.AppendLine($"UPDATE [{SettingHelper.tableName}]");
                                 UpdateBuilder.AppendLine($"SET");
                                 UpdateBuilder.AppendLine($"[{item.Key}] = @{item.Key}");
                             }
@@ -479,12 +503,12 @@ namespace AutoCode.Presentation
                 }
                 else if (SettingHelper.ConnectionType == Enum.ConnectionType.PostgreSQLServer)
                 {
-                    classBuilder.Append($"CREATE OR REPLACE FUNCTION public.{tableName.ToLower()}_update(");
+                    classBuilder.Append($"CREATE OR REPLACE FUNCTION public.{SettingHelper.tableName.ToLower()}_update(");
                     WhereBuilder.Append($"");
                     bool appendComma = false;
-                    for (int i = 0; i < TableColumnList.Count(); i++)
+                    for (int i = 0; i < SettingHelper.TableColumnList.Count(); i++)
                     {
-                        var item = TableColumnList.ElementAt(i);
+                        var item = SettingHelper.TableColumnList.ElementAt(i);
                         if (appendComma)
                         {
                             classBuilder.Append(",");
@@ -505,7 +529,7 @@ namespace AutoCode.Presentation
                                 UpdateBuilder.AppendLine($"AS $function$");
                                 UpdateBuilder.AppendLine($"DECLARE  affected INTEGER;");
                                 UpdateBuilder.AppendLine($"begin");
-                                UpdateBuilder.Append($"\tUPDATE \"{tableName}\"");
+                                UpdateBuilder.Append($"\tUPDATE \"{SettingHelper.tableName}\"");
                                 UpdateBuilder.Append($"\r\n\tSET \"{item.Key}\" = {item.Key.ToLower()}");
                             }
                             else
@@ -530,9 +554,11 @@ namespace AutoCode.Presentation
             {
                 StringBuilder classBuilder = new StringBuilder();
                 StringBuilder WhereBuilder = new StringBuilder();
+                string deletedId = !string.IsNullOrEmpty(SettingHelper.primaryKeyOfTable) && SettingHelper.primaryKeyOfTable != "" ? SettingHelper.primaryKeyOfTable.ToString() : "Id";
                 classBuilder.AppendLine("---------------------------------- Start Soft Delete SP Code ----------------------------------");
                 if (SettingHelper.ConnectionType == Enum.ConnectionType.MicrosoftSQLServer)
                 {
+                    string columnTypeforSqlServer = !string.IsNullOrEmpty(SettingHelper.primaryKeyOfTable) && SettingHelper.primaryKeyOfTable != "" ? GetColumnTypeForSP(SettingHelper.TableColumnList.First(x => x.Key == SettingHelper.primaryKeyOfTable).Value.Item1) : "int";
                     classBuilder.AppendLine($"USE [{SettingHelper.SqlConnectionStringBuilder.InitialCatalog}]");
                     classBuilder.AppendLine("");
                     classBuilder.AppendLine("SET ANSI_NULLS ON");
@@ -540,31 +566,30 @@ namespace AutoCode.Presentation
                     classBuilder.AppendLine("SET QUOTED_IDENTIFIER ON");
                     classBuilder.AppendLine("GO");
                     classBuilder.AppendLine("");
-                    classBuilder.AppendLine($"CREATE PROCEDURE [{tableName}_Soft_Delete]");
+                    classBuilder.AppendLine($"CREATE PROCEDURE [{SettingHelper.tableName}_Soft_Delete]");
                     classBuilder.AppendLine("");
                     classBuilder.AppendLine("");
-                    var primaryKey = TableColumnList.Where(x => x.Value.Item3).First();
-                    classBuilder.AppendLine(GetParameterForStoreProcedureForSQL(primaryKey.Key, primaryKey.Value.Item1));
+                    classBuilder.AppendLine(GetParameterForStoreProcedureForSQL(deletedId, columnTypeforSqlServer));
                     classBuilder.AppendLine($"AS");
                     classBuilder.AppendLine($"BEGIN");
                     classBuilder.AppendLine($"SET NOCOUNT ON;");
-                    classBuilder.AppendLine($"UPDATE [{tableName}]");
+                    classBuilder.AppendLine($"UPDATE [{SettingHelper.tableName}]");
                     classBuilder.AppendLine($"SET IsDeleted = 1");
-                    WhereBuilder.AppendLine($"WHERE [{primaryKey.Key}] = @{primaryKey.Key}");
+                    WhereBuilder.AppendLine($"WHERE [{deletedId}] = @{deletedId}");
                     WhereBuilder.AppendLine($"END ");
                 }
                 else if (SettingHelper.ConnectionType == Enum.ConnectionType.PostgreSQLServer)
                 {
-                    classBuilder.Append($"CREATE OR REPLACE FUNCTION public.{tableName.ToLower()}_softdelete");
-                    var primaryKey = TableColumnList.Where(x => x.Value.Item3).First();
-                    classBuilder.Append($"({primaryKey.Key.ToLower()} {primaryKey.Value.Item1})");
+                    string columnTypeforPostgreSql = !string.IsNullOrEmpty(SettingHelper.primaryKeyOfTable) && SettingHelper.primaryKeyOfTable != "" ? GetColumnTypeForSP(SettingHelper.TableColumnList.First(x => x.Key == SettingHelper.primaryKeyOfTable).Value.Item1) : "int";
+                    classBuilder.Append($"CREATE OR REPLACE FUNCTION public.{SettingHelper.tableName.ToLower()}_softdelete");
+                    classBuilder.Append($"({deletedId.ToLower()} {columnTypeforPostgreSql})");
                     classBuilder.AppendLine($"\r\nRETURNS boolean");
                     classBuilder.AppendLine($"LANGUAGE plpgsql");
                     classBuilder.AppendLine($"AS $function$");
                     classBuilder.AppendLine($"DECLARE  affected INTEGER;");
                     classBuilder.AppendLine($"begin");
-                    classBuilder.Append($"\r\n\tUPDATE \"{tableName}\"");
-                    classBuilder.Append($"\r\n\tSET \"IsDeleted\" = 1 \r\n\tWhere \"{primaryKey.Key}\" = {primaryKey.Key.ToLower()};");
+                    classBuilder.Append($"\r\n\tUPDATE \"{SettingHelper.tableName}\"");
+                    classBuilder.Append($"\r\n\tSET \"IsDeleted\" = 1 \r\n\tWhere \"{deletedId}\" = {deletedId.ToLower()};");
                     classBuilder.AppendLine($"\r\n\tGET DIAGNOSTICS affected = ROW_COUNT;\r\n\tIF affected = 1 THEN\r\n \t\tRETURN true;\r\n\tELSE\r\n\t\tRETURN false;\r\n\tEND IF;\r\n  END \r\n $function$\r\n;");
                 }
                 WhereBuilder.AppendLine($"---------------------------------- End Soft Delete SP Code ----------------------------------");
@@ -581,9 +606,11 @@ namespace AutoCode.Presentation
             {
                 StringBuilder classBuilder = new StringBuilder();
                 StringBuilder WhereBuilder = new StringBuilder();
+                string deletedId = !string.IsNullOrEmpty(SettingHelper.primaryKeyOfTable) && SettingHelper.primaryKeyOfTable != "" ? SettingHelper.primaryKeyOfTable.ToString() : "Id";
                 classBuilder.AppendLine("---------------------------------- Start Hard Delete SP Code ----------------------------------");
                 if (SettingHelper.ConnectionType == Enum.ConnectionType.MicrosoftSQLServer)
                 {
+                    string columnTypeforSqlServer = !string.IsNullOrEmpty(SettingHelper.primaryKeyOfTable) && SettingHelper.primaryKeyOfTable != "" ? GetColumnTypeForSP(SettingHelper.TableColumnList.First(x => x.Key == SettingHelper.primaryKeyOfTable).Value.Item1) : "int";
                     classBuilder.AppendLine($"USE [{SettingHelper.SqlConnectionStringBuilder.InitialCatalog}]");
                     classBuilder.AppendLine("");
                     classBuilder.AppendLine("SET ANSI_NULLS ON");
@@ -591,30 +618,29 @@ namespace AutoCode.Presentation
                     classBuilder.AppendLine("SET QUOTED_IDENTIFIER ON");
                     classBuilder.AppendLine("GO");
                     classBuilder.AppendLine("");
-                    classBuilder.AppendLine($"CREATE PROCEDURE [{tableName}_Hard_Delete]");
+                    classBuilder.AppendLine($"CREATE PROCEDURE [{SettingHelper.tableName}_Hard_Delete]");
                     classBuilder.AppendLine("");
                     classBuilder.AppendLine("");
-                    var primaryKey = TableColumnList.Where(x => x.Value.Item3).First();
-                    classBuilder.AppendLine(GetParameterForStoreProcedureForSQL(primaryKey.Key, primaryKey.Value.Item1));
+                    classBuilder.AppendLine(GetParameterForStoreProcedureForSQL(deletedId, columnTypeforSqlServer));
                     classBuilder.AppendLine($"AS");
                     classBuilder.AppendLine($"BEGIN");
                     classBuilder.AppendLine($"SET NOCOUNT ON;");
-                    classBuilder.AppendLine($"Delete From [{tableName}]");
-                    WhereBuilder.AppendLine($"WHERE [{primaryKey.Key}] = @{primaryKey.Key}");
+                    classBuilder.AppendLine($"Delete From [{SettingHelper.tableName}]");
+                    WhereBuilder.AppendLine($"WHERE [{deletedId}] = @{deletedId}");
                     WhereBuilder.AppendLine($"END ");
                 }
                 else if (SettingHelper.ConnectionType == Enum.ConnectionType.PostgreSQLServer)
                 {
-                    classBuilder.Append($"CREATE OR REPLACE FUNCTION public.{tableName.ToLower()}_harddelete");
-                    var primaryKey = TableColumnList.Where(x => x.Value.Item3).First();
-                    classBuilder.Append($"({primaryKey.Key.ToLower()} {primaryKey.Value.Item1})");
+                    string columnTypeforPostgreSql = !string.IsNullOrEmpty(SettingHelper.primaryKeyOfTable) && SettingHelper.primaryKeyOfTable != "" ? GetColumnTypeForSP(SettingHelper.TableColumnList.First(x => x.Key == SettingHelper.primaryKeyOfTable).Value.Item1) : "int";
+                    classBuilder.Append($"CREATE OR REPLACE FUNCTION public.{SettingHelper.tableName.ToLower()}_harddelete");
+                    classBuilder.Append($"({deletedId.ToLower()} {columnTypeforPostgreSql})");
                     classBuilder.AppendLine($"\r\nRETURNS boolean");
                     classBuilder.AppendLine($"LANGUAGE plpgsql");
                     classBuilder.AppendLine($"AS $function$");
                     classBuilder.AppendLine($"DECLARE  affected INTEGER;");
                     classBuilder.AppendLine($"begin");
-                    classBuilder.Append($"\r\n\t DELETE FROM \"{tableName}\"");
-                    classBuilder.Append($"\r\n\tWhere \"{primaryKey.Key}\" = {primaryKey.Key.ToLower()};");
+                    classBuilder.Append($"\r\n\t DELETE FROM \"{SettingHelper.tableName}\"");
+                    classBuilder.Append($"\r\n\tWhere \"{deletedId}\" = {deletedId.ToLower()};");
                     classBuilder.AppendLine($"\r\n\tGET DIAGNOSTICS affected = ROW_COUNT;\r\n\tIF affected = 1 THEN\r\n \t\tRETURN true;\r\n\tELSE\r\n\t\tRETURN false;\r\n\tEND IF;\r\n  END \r\n $function$\r\n;");
                 }
                 WhereBuilder.AppendLine($"\r\n---------------------------------- End Hard Delete SP Code ----------------------------------");
@@ -631,9 +657,11 @@ namespace AutoCode.Presentation
             {
                 StringBuilder classBuilder = new StringBuilder();
                 StringBuilder WhereBuilder = new StringBuilder();
+                string SelectId = !string.IsNullOrEmpty(SettingHelper.primaryKeyOfTable) && SettingHelper.primaryKeyOfTable != "" ? SettingHelper.primaryKeyOfTable.ToString() : "Id";
                 classBuilder.AppendLine("---------------------------------- Start Select SP Code ----------------------------------");
                 if (SettingHelper.ConnectionType == Enum.ConnectionType.MicrosoftSQLServer)
                 {
+                    string columnTypeforSqlServer = !string.IsNullOrEmpty(SettingHelper.primaryKeyOfTable) && SettingHelper.primaryKeyOfTable != "" ? GetColumnTypeForSP(SettingHelper.TableColumnList.First(x => x.Key == SettingHelper.primaryKeyOfTable).Value.Item1) : "int";
                     classBuilder.AppendLine($"USE [{SettingHelper.SqlConnectionStringBuilder.InitialCatalog}]");
                     classBuilder.AppendLine("");
                     classBuilder.AppendLine("SET ANSI_NULLS ON");
@@ -641,48 +669,46 @@ namespace AutoCode.Presentation
                     classBuilder.AppendLine("SET QUOTED_IDENTIFIER ON");
                     classBuilder.AppendLine("GO");
                     classBuilder.AppendLine("");
-                    classBuilder.AppendLine($"CREATE PROCEDURE [{tableName}_Select_By_Id]");
+                    classBuilder.AppendLine($"CREATE PROCEDURE [{SettingHelper.tableName}_Select_By_Id]");
                     classBuilder.AppendLine("");
                     classBuilder.AppendLine("");
-
-                    var primaryKey = TableColumnList.Where(x => x.Value.Item3).First();
-                    classBuilder.AppendLine(GetParameterForStoreProcedureForSQL(primaryKey.Key, primaryKey.Value.Item1));
+                    classBuilder.AppendLine(GetParameterForStoreProcedureForSQL(SelectId, columnTypeforSqlServer));
                     classBuilder.AppendLine($"AS");
                     classBuilder.AppendLine($"BEGIN");
                     classBuilder.AppendLine($"SET NOCOUNT ON;");
                     classBuilder.AppendLine($"Select ");
-                    for (int i = 0; i < TableColumnList.Count(); i++)
+                    for (int i = 0; i < SettingHelper.TableColumnList.Count(); i++)
                     {
-                        var item = TableColumnList.ElementAt(i);
+                        var item = SettingHelper.TableColumnList.ElementAt(i);
                         if (i != 0)
                             classBuilder.Append($",");
                         classBuilder.AppendLine($"[{item.Key.ToString()}]");
                     }
-                    classBuilder.AppendLine($" From [{tableName}]");
-                    WhereBuilder.AppendLine($"WHERE [{primaryKey.Key}] = @{primaryKey.Key}");
+                    classBuilder.AppendLine($" From [{SettingHelper.tableName}]");
+                    WhereBuilder.AppendLine($"WHERE [{SelectId}] = @{SelectId}");
                     WhereBuilder.AppendLine($"END ");
                 }
                 else if (SettingHelper.ConnectionType == Enum.ConnectionType.PostgreSQLServer)
                 {
-                    classBuilder.Append($"CREATE OR REPLACE FUNCTION public.{tableName.ToLower()}_select_by_id");
-                    var primaryKey = TableColumnList.Where(x => x.Value.Item3).First();
-                    classBuilder.Append($"({primaryKey.Key.ToLower()} {primaryKey.Value.Item1})");
-                    classBuilder.AppendLine($"\r\nRETURNS SETOF \"" + tableName + "\"");
+                    string columnTypeforPostgreSql = !string.IsNullOrEmpty(SettingHelper.primaryKeyOfTable) && SettingHelper.primaryKeyOfTable != "" ? GetColumnTypeForSP(SettingHelper.TableColumnList.First(x => x.Key == SettingHelper.primaryKeyOfTable).Value.Item1) : "int";
+                    classBuilder.Append($"CREATE OR REPLACE FUNCTION public.{SettingHelper.tableName.ToLower()}_select_by_id");
+                    classBuilder.Append($"({SelectId.ToLower()} {columnTypeforPostgreSql})");
+                    classBuilder.AppendLine($"\r\nRETURNS SETOF \"" + SettingHelper.tableName + "\"");
                     classBuilder.AppendLine($"LANGUAGE plpgsql");
                     classBuilder.AppendLine($"AS $function$");
                     classBuilder.AppendLine($"begin");
-                    classBuilder.AppendLine($"\treturn query select ");
-                    for (int i = 0; i < TableColumnList.Count(); i++)
+                    classBuilder.Append($"   RETURN QUERY \n select ");
+                    for (int i = 0; i < SettingHelper.TableColumnList.Count(); i++)
                     {
-                        var item = TableColumnList.ElementAt(i);
+                        var item = SettingHelper.TableColumnList.ElementAt(i);
                         if (i != 0)
                             classBuilder.Append($",");
                         else
                             classBuilder.Append("\t");
                         classBuilder.Append($" \"{item.Key.ToString()}\"");
                     }
-                    classBuilder.AppendLine($"\r\n\tfrom \"{tableName}\"");
-                    classBuilder.AppendLine($"\twhere \"{primaryKey.Key}\" = {primaryKey.Key.ToLower()};");
+                    classBuilder.AppendLine($"\r\n\tfrom \"{SettingHelper.tableName}\"");
+                    classBuilder.AppendLine($"\twhere \"{SelectId}\" = {SelectId.ToLower()};");
                     classBuilder.AppendLine($"END\r\n$function$\r\n;");
                 }
                 WhereBuilder.AppendLine($"---------------------------------- End Select SP Code ----------------------------------");
@@ -699,14 +725,14 @@ namespace AutoCode.Presentation
             {
                 StringBuilder classBuilder = new StringBuilder();
                 classBuilder.AppendLine("---------------------------------- Start Select All with Pagination, Search And Sort Code ----------------------------------");
-                string tableNameAsVariable = ConvertProperCaseStringToCamelCaseString(tableName);
-                string tableListAsVariable = $"{ConvertProperCaseStringToCamelCaseString(tableName)}List";
+                string tableNameAsVariable = ConvertProperCaseStringToCamelCaseString(SettingHelper.tableName);
+                string tableListAsVariable = $"{ConvertProperCaseStringToCamelCaseString(SettingHelper.tableName)}List";
 
-                classBuilder.AppendLine($"public PaginationModel {tableName}SelectListWithPaginationAndSearch(DataTablePagintaion dataTablePagintaion)");
+                classBuilder.AppendLine($"public PaginationModel {SettingHelper.tableName}SelectListWithPaginationAndSearch(DataTablePagintaion dataTablePagintaion)");
                 classBuilder.AppendLine("{\r\n\ttry\r\n\t{");
                 classBuilder.AppendLine($"\t\tPaginationModel paginationModel = new PaginationModel();");
                 classBuilder.AppendLine($"\t\tint skip = ((dataTablePagintaion.PageIndex - 1) * dataTablePagintaion.PageSize);");
-                classBuilder.AppendLine($"\t\tType myType = typeof({tableName});");
+                classBuilder.AppendLine($"\t\tType myType = typeof({SettingHelper.tableName});");
                 classBuilder.AppendLine($"\t\tvar field = myType.GetProperty(dataTablePagintaion.SortField);");
                 classBuilder.AppendLine("\t\tif (field == null)\r\n\t\t{");
                 classBuilder.AppendLine("\t\t\tdataTablePagintaion.SortField = \"createddate\";");
@@ -721,10 +747,10 @@ namespace AutoCode.Presentation
                     classBuilder.AppendLine($"paramList.Add(new SqlParameter(\"@PageSize\", dataTablePagintaion.PageSize));");
                     classBuilder.AppendLine($"paramList.Add(new SqlParameter(\"@SortColumn\", dataTablePagintaion.SortField.ToString().ToLower()));");
                     classBuilder.AppendLine($"paramList.Add(new SqlParameter(\"@SortOrder\", dataTablePagintaion.SortType));");
-                    classBuilder.AppendLine($" DataTable dt = SqlHelper.ExecuteDataTable(SettingHelper.SqlConnectionStringBuilder.ConnectionString, CommandType.StoredProcedure, \"{tableName}_Select_List_With_Pagination_And_Search\", paramList.ToArray());");
+                    classBuilder.AppendLine($" DataTable dt = SqlHelper.ExecuteDataTable(SettingHelper.SqlConnectionStringBuilder.ConnectionString, CommandType.StoredProcedure, \"{SettingHelper.tableName}_Select_List_With_Pagination_And_Search\", paramList.ToArray());");
                     classBuilder.AppendLine("if(dt != null && dt.Rows.Count > 0) { ");
                     classBuilder.AppendLine($"string JsonString = JsonConvert.SerializeObject(dt);");
-                    classBuilder.AppendLine($"List<{tableName}> objList = JsonConvert.DeserializeObject<List<{tableName}>>(JsonString);");
+                    classBuilder.AppendLine($"List<{SettingHelper.tableName}> objList = JsonConvert.DeserializeObject<List<{SettingHelper.tableName}>>(JsonString);");
                     classBuilder.AppendLine($"int totalRowsCount = Convert.ToInt32(((Newtonsoft.Json.Linq.JValue)((Newtonsoft.Json.Linq.JProperty)((Newtonsoft.Json.Linq.JContainer)JsonConvert.DeserializeObject(JsonString)).First.First).Value).Value);");
                 }
                 else if (SettingHelper.ConnectionType == Enum.ConnectionType.PostgreSQLServer)
@@ -735,11 +761,11 @@ namespace AutoCode.Presentation
                     classBuilder.AppendLine($"\t\tparamList.Add(new NpgsqlParameter(@\"searchtext\", dataTablePagintaion.SearchText));");
                     classBuilder.AppendLine($"\t\tparamList.Add(new NpgsqlParameter(@\"sortcolumn\", dataTablePagintaion.SortField));");
                     classBuilder.AppendLine($"\t\tparamList.Add(new NpgsqlParameter(@\"sorttype\", dataTablePagintaion.SortType));");
-                    classBuilder.AppendLine($"\t\tList<DataListModel> dataList = PostgreSQLHandler.ExecuteAsObject<List<DataListModel>(\"{tableName.ToLower()}_select_list_with_pagination_search_and_sort\", paramList);");
+                    classBuilder.AppendLine($"\t\tList<DataListModel> dataList = PostgreSQLHandler.ExecuteAsObject<List<DataListModel>(\"{SettingHelper.tableName.ToLower()}_select_list_with_pagination_search_and_sort\", paramList);");
                     classBuilder.AppendLine("\t\tint totalRowsCount = 0;\r\n\t\tif (dataList != null && dataList.Any())");
                     classBuilder.AppendLine("\t\t\ttotalRowsCount = dataList.First().TotalCount;");
                     classBuilder.AppendLine($"\t\tstring jsonString = JsonConvert.SerializeObject(dataList);");
-                    classBuilder.AppendLine($"\t\tList<{tableName}> objList = JsonConvert.DeserializeObject<List<{tableName}>>(jsonString);");
+                    classBuilder.AppendLine($"\t\tList<{SettingHelper.tableName}> objList = JsonConvert.DeserializeObject<List<{SettingHelper.tableName}>>(jsonString);");
                 }
                 classBuilder.AppendLine($"\t\tpaginationModel.TotalPages = (int)Math.Ceiling((float)totalRowsCount / dataTablePagintaion.PageSize);");
                 classBuilder.AppendLine($"\t\tpaginationModel.PageIndex = dataTablePagintaion.PageIndex;");
@@ -765,6 +791,7 @@ namespace AutoCode.Presentation
             try
             {
                 StringBuilder classBuilder = new StringBuilder();
+                string selectId = !string.IsNullOrEmpty(SettingHelper.primaryKeyOfTable) && SettingHelper.primaryKeyOfTable != "" ? SettingHelper.primaryKeyOfTable.ToString() : "Id";
                 classBuilder.AppendLine("---------------------------------- Start Select all with pagination SP Code ----------------------------------");
                 if (SettingHelper.ConnectionType == Enum.ConnectionType.MicrosoftSQLServer)
                 {
@@ -775,7 +802,7 @@ namespace AutoCode.Presentation
                     classBuilder.AppendLine("SET QUOTED_IDENTIFIER ON");
                     classBuilder.AppendLine("GO");
                     classBuilder.AppendLine("");
-                    classBuilder.AppendLine($"CREATE PROCEDURE [{tableName}_Select_List_With_Pagination_And_Search]");
+                    classBuilder.AppendLine($"CREATE PROCEDURE [{SettingHelper.tableName}_Select_List_With_Pagination_And_Search]");
                     classBuilder.AppendLine($"");
                     classBuilder.AppendLine($"@SearchText nvarchar(300)=null,\r\n@PageIndex INT = 1,\r\n@PageSize INT = 100,\r\n@SortColumn NVARCHAR(50) = '',\r\n@SortOrder int=1");
                     classBuilder.AppendLine($"");
@@ -792,13 +819,13 @@ namespace AutoCode.Presentation
                     classBuilder.AppendLine($"SET @LastRecTemp = ( @PageIndexTemp * @PageSizeTemp + 1 );");
                     classBuilder.AppendLine($"SET @TotalRowsTemp = @FirstRecTemp - @LastRecTemp + 1;");
                     classBuilder.AppendLine($"");
-                    classBuilder.AppendLine($"WITH {tableName}Data as(SELECT ROW_NUMBER() OVER (ORDER BY");
+                    classBuilder.AppendLine($"WITH {SettingHelper.tableName}Data as(SELECT ROW_NUMBER() OVER (ORDER BY");
                     classBuilder.AppendLine($"");
                     bool addComma = false;
 
-                    for (int i = 0; i < TableColumnList.Count(); i++)
+                    for (int i = 0; i < SettingHelper.TableColumnList.Count(); i++)
                     {
-                        var item = TableColumnList.ElementAt(i);
+                        var item = SettingHelper.TableColumnList.ElementAt(i);
                         if (IsColumnString(item.Value.Item1) || IsColumnDate(item.Value.Item1))
                         {
                             if (addComma)
@@ -808,11 +835,11 @@ namespace AutoCode.Presentation
                             addComma = true;
                         }
                     }
-                    classBuilder.AppendLine($") AS ROWNUM, Count(Id) over () AS TotalCount, * From {tableName}");
+                    classBuilder.AppendLine($") AS ROWNUM, Count(Id) over () AS TotalCount, * From {SettingHelper.tableName}");
                     bool addOr = false;
-                    for (int i = 0; i < TableColumnList.Count(); i++)
+                    for (int i = 0; i < SettingHelper.TableColumnList.Count(); i++)
                     {
-                        var item = TableColumnList.ElementAt(i);
+                        var item = SettingHelper.TableColumnList.ElementAt(i);
                         if (IsColumnString(item.Value.Item1))
                         {
                             if (addOr)
@@ -832,12 +859,12 @@ namespace AutoCode.Presentation
                     classBuilder.AppendLine($"SELECT");
                     classBuilder.AppendLine($"TotalCount");
                     classBuilder.AppendLine($",ROWNUM");
-                    for (int i = 0; i < TableColumnList.Count(); i++)
+                    for (int i = 0; i < SettingHelper.TableColumnList.Count(); i++)
                     {
-                        var item = TableColumnList.ElementAt(i);
+                        var item = SettingHelper.TableColumnList.ElementAt(i);
                         classBuilder.AppendLine($",{item.Key.ToString()}");
                     }
-                    classBuilder.AppendLine($"FROM {tableName}Data");
+                    classBuilder.AppendLine($"FROM {SettingHelper.tableName}Data");
                     classBuilder.AppendLine($"WHERE ROWNUM > @FirstRecTemp AND ROWNUM < @LastRecTemp");
                     classBuilder.AppendLine($"ORDER BY ROWNUM ASC");
                     classBuilder.AppendLine($"");
@@ -845,15 +872,14 @@ namespace AutoCode.Presentation
                 }
                 else if (SettingHelper.ConnectionType == Enum.ConnectionType.PostgreSQLServer)
                 {
-                    var primaryKey = TableColumnList.Where(x => x.Value.Item3).First();
-                    classBuilder.Append($"CREATE OR REPLACE FUNCTION public.{tableName.ToLower()}_select_list_with_pagination_search_and_sort");
+                    classBuilder.Append($"CREATE OR REPLACE FUNCTION public.{SettingHelper.tableName.ToLower()}_select_list_with_pagination_search_and_sort");
                     classBuilder.Append($"(offsetsize bigint, pagesize bigint, searchtext varchar, sortcolumn varchar, sorttype integer DEFAULT '-1'::integer)");
                     classBuilder.Append($"\r\nRETURNS TABLE (\"ROWNUM\" bigint, \"TotalCount\" bigint,");
-                    for (int i = 0; i < TableColumnList.Count(); i++)
+                    for (int i = 0; i < SettingHelper.TableColumnList.Count(); i++)
                     {
-                        var item = TableColumnList.ElementAt(i);
+                        var item = SettingHelper.TableColumnList.ElementAt(i);
                         classBuilder.Append($"\"{item.Key.ToString()}\" {item.Value.Item1}");
-                        if (i < TableColumnList.Count() - 1)
+                        if (i < SettingHelper.TableColumnList.Count() - 1)
                             classBuilder.Append($", ");
                     }
                     classBuilder.AppendLine($")");
@@ -864,32 +890,32 @@ namespace AutoCode.Presentation
                     classBuilder.AppendLine($"begin");
                     classBuilder.AppendLine($"\treturn query\r\n\tSELECT ROW_NUMBER() OVER (ORDER BY");
                     bool addComma = false;
-                    for (int i = 0; i < TableColumnList.Count(); i++)
+                    for (int i = 0; i < SettingHelper.TableColumnList.Count(); i++)
                     {
-                        var item = TableColumnList.ElementAt(i);
+                        var item = SettingHelper.TableColumnList.ElementAt(i);
                         if (IsColumnString(item.Value.Item1) || IsColumnDate(item.Value.Item1))
                         {
                             if (addComma)
                                 classBuilder.Append($"\t\t,");
                             else
                                 classBuilder.Append($"\t\t");
-                            classBuilder.AppendLine($"CASE WHEN sortcolumn = '{item.Key.ToLower().ToString()}' AND sorttype = 1 THEN \"{tableName}\".\"{item.Key.ToString()}\" END ASC");
-                            classBuilder.AppendLine($"\t\t,CASE WHEN sortcolumn = '{item.Key.ToLower().ToString()}' AND sorttype = -1 THEN \"{tableName}\".\"{item.Key.ToString()}\" END DESC");
+                            classBuilder.AppendLine($"CASE WHEN sortcolumn = '{item.Key.ToLower().ToString()}' AND sorttype = 1 THEN \"{SettingHelper.tableName}\".\"{item.Key.ToString()}\" END ASC");
+                            classBuilder.AppendLine($"\t\t,CASE WHEN sortcolumn = '{item.Key.ToLower().ToString()}' AND sorttype = -1 THEN \"{SettingHelper.tableName}\".\"{item.Key.ToString()}\" END DESC");
                             addComma = true;
                         }
                     }
-                    classBuilder.AppendLine($"\t) AS \"ROWNUM\", count(\"{tableName}\".\"{primaryKey.Key.ToString()}\") over () AS \"TotalCount\", \"{tableName}\".* From \"{tableName}\"");
+                    classBuilder.AppendLine($"\t) AS \"ROWNUM\", count(\"{SettingHelper.tableName}\".\"{selectId.ToString()}\") over () AS \"TotalCount\", \"{SettingHelper.tableName}\".* From \"{SettingHelper.tableName}\"");
                     bool addOr = false;
-                    for (int i = 0; i < TableColumnList.Count(); i++)
+                    for (int i = 0; i < SettingHelper.TableColumnList.Count(); i++)
                     {
-                        var item = TableColumnList.ElementAt(i);
+                        var item = SettingHelper.TableColumnList.ElementAt(i);
                         if (IsColumnString(item.Value.Item1))
                         {
                             if (addOr)
                                 classBuilder.AppendLine($"\tOR");
                             else
                                 classBuilder.AppendLine($"\t WHERE ");
-                            classBuilder.AppendLine($"\t (searchtext IS NULL OR \"{tableName}\".\"{item.Key.ToString()}\"  ILIKE CONCAT('%',searchtext,'%'))");
+                            classBuilder.AppendLine($"\t (searchtext IS NULL OR \"{SettingHelper.tableName}\".\"{item.Key.ToString()}\"  ILIKE CONCAT('%',searchtext,'%'))");
                             addOr = true;
                         }
                     }
@@ -916,13 +942,13 @@ namespace AutoCode.Presentation
                 if (SettingHelper.ConnectionType == Enum.ConnectionType.MicrosoftSQLServer)
                 {
                     classBuilder.AppendLine($"USE [{SettingHelper.SqlConnectionStringBuilder.InitialCatalog}]");
-                    classBuilder.AppendLine($"CREATE PROCEDURE dbo.getAllData_{tableName.ToLower()}");
+                    classBuilder.AppendLine($"CREATE PROCEDURE dbo.getAllDataOf_{SettingHelper.tableName.ToLower()}");
                     classBuilder.Append($"AS\r\n" + $"BEGIN\r\n    " + $"SET NOCOUNT ON;");
                     returnParams.AppendLine($"\nSELECT ");
                     bool appendComma = false;
-                    for (int i = 0; i < TableColumnList.Count(); i++)
+                    for (int i = 0; i < SettingHelper.TableColumnList.Count(); i++)
                     {
-                        var item = TableColumnList.ElementAt(i);
+                        var item = SettingHelper.TableColumnList.ElementAt(i);
                         if (appendComma)
                         {
                             returnParams.Append(",");
@@ -930,22 +956,22 @@ namespace AutoCode.Presentation
                         appendComma = true;
                         returnParams.Append($"{item.Key}");
                     }
-                    returnParams.AppendLine($" From dbo.{tableName}");
+                    returnParams.AppendLine($" From dbo.{SettingHelper.tableName}");
                     tableParams.AppendLine($"End;");
                 }
                 else if (SettingHelper.ConnectionType == Enum.ConnectionType.PostgreSQLServer)
                 {
-                    classBuilder.AppendLine($"CREATE OR REPLACE FUNCTION public.get_all_{tableName.ToLower()}()");
+                    classBuilder.AppendLine($"CREATE OR REPLACE FUNCTION public.get_allDataOf_{SettingHelper.tableName.ToLower()}()");
                     returnParams.Append($"RETURNS TABLE(");
                     tableParams.AppendLine($"SELECT ");
                     bool isFirstRow = false;
-                    for (int i = 0; i < TableColumnList.Count(); i++)
+                    for (int i = 0; i < SettingHelper.TableColumnList.Count(); i++)
                     {
-                        var item = TableColumnList.ElementAt(i);
+                        var item = SettingHelper.TableColumnList.ElementAt(i);
                         if (isFirstRow == false)
                         {
                             returnParams.Append($" \n\"{item.Key.ToLower()}\" {item.Value.Item1}");
-                            tableParams.Append($"\"{tableName}\".\"{item.Key}\"");
+                            tableParams.Append($"\"{SettingHelper.tableName}\".\"{item.Key}\"");
                             isFirstRow = true;
                         }
                         else
@@ -953,7 +979,7 @@ namespace AutoCode.Presentation
                             returnParams.Append(",");
                             returnParams.Append($" \n\"{item.Key.ToLower()}\" {item.Value.Item1}");
                             tableParams.Append(",");
-                            tableParams.Append($"\"{tableName}\".\"{item.Key}\"");
+                            tableParams.Append($"\"{SettingHelper.tableName}\".\"{item.Key}\"");
                         }
                     }
                     returnParams.Append(")");
@@ -961,7 +987,7 @@ namespace AutoCode.Presentation
                     returnParams.AppendLine($"AS $function$");
                     returnParams.AppendLine($"BEGIN");
                     returnParams.AppendLine($"   RETURN QUERY");
-                    tableParams.AppendLine($" FROM public.\"{tableName}\"");
+                    tableParams.AppendLine($" FROM public.\"{SettingHelper.tableName}\"");
                     tableParams.AppendLine($" Where \"IsDeleted\" = false;");
                     tableParams.AppendLine($"END;\r\n$function$\r\n;");
                 }
@@ -979,31 +1005,31 @@ namespace AutoCode.Presentation
             {
                 StringBuilder classBuilder = new StringBuilder();
                 classBuilder.AppendLine("---------------------------------- Start List's Code ----------------------------------");
-                classBuilder.AppendLine($"public static List<{tableName}> GetAllData()");
+                classBuilder.AppendLine($"public static List<{SettingHelper.tableName}> GetAllData()");
                 classBuilder.AppendLine($"{{");
                 classBuilder.AppendLine($"            try\r\n            {{");
-                classBuilder.AppendLine($"                List<{tableName}> {tableName.ToLower()}List = new List<{tableName}>();");
+                classBuilder.AppendLine($"                List<{SettingHelper.tableName}> {SettingHelper.tableName.ToLower()}List = new List<{SettingHelper.tableName}>();");
                 if (SettingHelper.ConnectionType == Enum.ConnectionType.MicrosoftSQLServer)
                 {
-                    classBuilder.AppendLine($"                DataTable dt = PostgreSQLHandler.ExecuteDataTable(connectionString, \"dbo.getAllData_{tableName.ToLower()}\");");
+                    classBuilder.AppendLine($"                DataTable dt = SqlHelper.ExecuteDataTable(connectionString, \"dbo.getAllDataOf_{SettingHelper.tableName.ToLower()}\");");
                 }
                 else if (SettingHelper.ConnectionType == Enum.ConnectionType.PostgreSQLServer)
                 {
-                    classBuilder.AppendLine($"                DataTable dt = PostgreSQLHandler.ExecuteDataTable(connectionString, \"public.get_all_{tableName.ToLower()}();\");");
+                    classBuilder.AppendLine($"                DataTable dt = PostgreSQLHandler.ExecuteDataTable(connectionString, \"public.get_allDataOf_{SettingHelper.tableName.ToLower()}();\");");
                 }
                 classBuilder.AppendLine($"                if (dt.Rows.Count > 0)\r\n                {{");
                 classBuilder.AppendLine($"                    foreach (DataRow row in dt.Rows)\r\n                    {{");
-                classBuilder.AppendLine($"                        {tableName} {tableName.ToLower()}Data = new Testing\r\n                        {{");
-                for (int i = 0; i < TableColumnList.Count(); i++)
+                classBuilder.AppendLine($"                        {SettingHelper.tableName} {SettingHelper.tableName.ToLower()}Data = new Testing\r\n                        {{");
+                for (int i = 0; i < SettingHelper.TableColumnList.Count(); i++)
                 {
-                    var item = TableColumnList.ElementAt(i);
+                    var item = SettingHelper.TableColumnList.ElementAt(i);
                     classBuilder.AppendLine($"                            {item.Key} = row[\"{item.Key}\"],");
                 }
                 classBuilder.AppendLine($"                        }};");
-                classBuilder.AppendLine($"                        {tableName.ToLower()}List.Add({tableName.ToLower()}Data);");
+                classBuilder.AppendLine($"                        {SettingHelper.tableName.ToLower()}List.Add({SettingHelper.tableName.ToLower()}Data);");
                 classBuilder.AppendLine($"                    }}");
                 classBuilder.AppendLine($"                }}");
-                classBuilder.AppendLine($"                return {tableName.ToLower()}List;");
+                classBuilder.AppendLine($"                return {SettingHelper.tableName.ToLower()}List;");
                 classBuilder.AppendLine($"            }}");
                 classBuilder.AppendLine($"            catch (Exception ex)\r\n            " +
                     $"{{\r\n                " +
@@ -1023,35 +1049,35 @@ namespace AutoCode.Presentation
             try
             {
                 StringBuilder classBuilder = new StringBuilder();
-                string tableNameAsVariable = ConvertProperCaseStringToCamelCaseString(tableName);
+                string tableNameAsVariable = ConvertProperCaseStringToCamelCaseString(SettingHelper.tableName);
                 classBuilder.AppendLine("---------------------------------- Start Add Record Code ----------------------------------");
-                classBuilder.AppendLine($"public void {tableName}Insert ({tableName} {tableNameAsVariable})");
+                classBuilder.AppendLine($"public void {SettingHelper.tableName}Insert ({SettingHelper.tableName} {tableNameAsVariable})");
                 classBuilder.AppendLine("{\r\n\ttry\r\n\t{");
                 if (SettingHelper.ConnectionType == Enum.ConnectionType.MicrosoftSQLServer)
                 {
                     classBuilder.AppendLine("\t\tList<SqlParameter> paramList = new List<SqlParameter>();");
-                    for (int i = 0; i < TableColumnList.Count(); i++)
+                    for (int i = 0; i < SettingHelper.TableColumnList.Count(); i++)
                     {
-                        var item = TableColumnList.ElementAt(i);
-                        if (item.Key.ToLower().Trim() != primaryKeyOfTable.ToLower().Trim())
+                        var item = SettingHelper.TableColumnList.ElementAt(i);
+                        if (item.Key.ToLower().Trim() != SettingHelper.primaryKeyOfTable.ToLower().Trim())
                         {
                             classBuilder.AppendLine($"\t\tparamList.Add(new SqlParameter(@\"{item.Key}\", {tableNameAsVariable}.{item.Key}));");
                         }
                     }
-                    classBuilder.AppendLine($"\t\tSqlHelper.ExecuteNonQuery(ConnString, CommandType.StoredProcedure, \"{tableName}_Insert\", paramList.ToArray());");
+                    classBuilder.AppendLine($"\t\tSqlHelper.ExecuteNonQuery(ConnString, CommandType.StoredProcedure, \"{SettingHelper.tableName}_Insert\", paramList.ToArray());");
                 }
                 else if (SettingHelper.ConnectionType == Enum.ConnectionType.PostgreSQLServer)
                 {
                     classBuilder.AppendLine("\t\tList<NpgsqlParameter> paramList = new List<NpgsqlParameter>();");
-                    for (int i = 0; i < TableColumnList.Count(); i++)
+                    for (int i = 0; i < SettingHelper.TableColumnList.Count(); i++)
                     {
-                        var item = TableColumnList.ElementAt(i);
-                        if (item.Key.ToLower().Trim() != primaryKeyOfTable.ToLower().Trim())
+                        var item = SettingHelper.TableColumnList.ElementAt(i);
+                        if (item.Key.ToLower().Trim() != SettingHelper.primaryKeyOfTable.ToLower().Trim())
                         {
                             classBuilder.AppendLine($"\t\tparamList.Add(new NpgsqlParameter(@\"{item.Key.ToLower().ToString()}\", {tableNameAsVariable}.{item.Key}));");
                         }
                     }
-                    classBuilder.AppendLine($"\t\tbool spResult = PostgreSQLHandler.ExecuteAsScalar<bool>(\"{tableName.ToLower()}_add\", paramList);");
+                    classBuilder.AppendLine($"\t\tbool spResult = PostgreSQLHandler.ExecuteAsScalar<bool>(\"{SettingHelper.tableName.ToLower()}_add\", paramList);");
                 }
                 classBuilder.AppendLine("\t}\r\n\tcatch (Exception ex)\r\n\t{\r\n\t\tthrow ex;\r\n\t}\r\n}");
                 classBuilder.AppendLine("---------------------------------- End Add Record Code ----------------------------------");
@@ -1068,32 +1094,32 @@ namespace AutoCode.Presentation
             try
             {
                 StringBuilder classBuilder = new StringBuilder();
-                string tableNameAsVariable = ConvertProperCaseStringToCamelCaseString(tableName);
+                string tableNameAsVariable = ConvertProperCaseStringToCamelCaseString(SettingHelper.tableName);
                 classBuilder.AppendLine("---------------------------------- Start Update Record Code ----------------------------------");
-                classBuilder.AppendLine($"public void {tableName}Update ({tableName} {tableNameAsVariable})");
+                classBuilder.AppendLine($"public void {SettingHelper.tableName}Update ({SettingHelper.tableName} {tableNameAsVariable})");
                 classBuilder.AppendLine("{\r\n\ttry\r\n\t{");
                 if (SettingHelper.ConnectionType == Enum.ConnectionType.MicrosoftSQLServer)
                 {
                     classBuilder.AppendLine("\t\tList<SqlParameter> paramList = new List<SqlParameter>();");
-                    for (int i = 0; i < TableColumnList.Count(); i++)
+                    for (int i = 0; i < SettingHelper.TableColumnList.Count(); i++)
                     {
-                        var item = TableColumnList.ElementAt(i);
+                        var item = SettingHelper.TableColumnList.ElementAt(i);
                         classBuilder.AppendLine($"\t\tparamList.Add(new SqlParameter(@\"{item.Key}\", {tableNameAsVariable}.{item.Key}));");
                     }
-                    classBuilder.AppendLine($"\t\tSqlHelper.ExecuteNonQuery(ConnString, CommandType.StoredProcedure, \"{tableName}_Update\", paramList.ToArray());");
+                    classBuilder.AppendLine($"\t\tSqlHelper.ExecuteNonQuery(ConnString, CommandType.StoredProcedure, \"{SettingHelper.tableName}_Update\", paramList.ToArray());");
                 }
                 else if (SettingHelper.ConnectionType == Enum.ConnectionType.PostgreSQLServer)
                 {
                     classBuilder.AppendLine("\t\tList<NpgsqlParameter> paramList = new List<NpgsqlParameter>();");
-                    for (int i = 0; i < TableColumnList.Count(); i++)
+                    for (int i = 0; i < SettingHelper.TableColumnList.Count(); i++)
                     {
-                        var item = TableColumnList.ElementAt(i);
-                        if (item.Key.ToLower().Trim() != primaryKeyOfTable.ToLower().Trim())
-                        {
+                        var item = SettingHelper.TableColumnList.ElementAt(i);
+                        //if (item.Key.ToLower().Trim() != SettingHelper.primaryKeyOfTable.ToLower().Trim())
+                        //{
                             classBuilder.AppendLine($"\t\tparamList.Add(new NpgsqlParameter(@\"{item.Key.ToLower().ToString()}\", {tableNameAsVariable}.{item.Key}));");
-                        }
+                        //}
                     }
-                    classBuilder.AppendLine($"\t\tbool spResult = PostgreSQLHandler.ExecuteAsScalar<bool>(\"{tableName.ToLower()}_update\", paramList);");
+                    classBuilder.AppendLine($"\t\tbool spResult = PostgreSQLHandler.ExecuteAsScalar<bool>(\"{SettingHelper.tableName.ToLower()}_update\", paramList);");
                 }
                 classBuilder.AppendLine("\t}\r\n\tcatch (Exception ex)\r\n\t{\r\n\t\tthrow ex;\r\n\t}\r\n}");
                 classBuilder.AppendLine("---------------------------------- End Update Record Code ----------------------------------");
@@ -1155,26 +1181,28 @@ namespace AutoCode.Presentation
             try
             {
                 StringBuilder classBuilder = new StringBuilder();
+                string SelectId = !string.IsNullOrEmpty(SettingHelper.primaryKeyOfTable) && SettingHelper.primaryKeyOfTable != "" ? SettingHelper.primaryKeyOfTable.ToString() : "Id";
                 classBuilder.AppendLine("---------------------------------- Start Select Record By Id Code ----------------------------------");
-                string tableNameAsVariable = ConvertProperCaseStringToCamelCaseString(tableName);
+                string tableNameAsVariable = ConvertProperCaseStringToCamelCaseString(SettingHelper.tableName);
                 if (SettingHelper.ConnectionType == Enum.ConnectionType.MicrosoftSQLServer)
                 {
-                    classBuilder.AppendLine($"public {tableName} {tableName}SelectById ({GetColumnTypeForMSSql(TableColumnList.First(x => x.Key == primaryKeyOfTable).Value.Item1)} {primaryKeyOfTable})");
+                    string columnTypeforSqlServer = !string.IsNullOrEmpty(SettingHelper.primaryKeyOfTable) && SettingHelper.primaryKeyOfTable != "" ? GetColumnTypeForMSSql(SettingHelper.TableColumnList.First(x => x.Key == SettingHelper.primaryKeyOfTable).Value.Item1) : "int";
+                    classBuilder.AppendLine($"public {SettingHelper.tableName} {SettingHelper.tableName}SelectById ({columnTypeforSqlServer} {SelectId})");
                     classBuilder.AppendLine("{\r\n\ttry\r\n\t{");
-                    classBuilder.AppendLine($"\t\t{tableName} {ConvertProperCaseStringToCamelCaseString(tableName)} = null;");
+                    classBuilder.AppendLine($"\t\t{SettingHelper.tableName} {ConvertProperCaseStringToCamelCaseString(SettingHelper.tableName)} = null;");
                     classBuilder.AppendLine($"");
                     classBuilder.AppendLine("List<SqlParameter> paramList = new List<SqlParameter>();");
-                    classBuilder.AppendLine($"paramList.Add(new SqlParameter(@\"{primaryKeyOfTable}\", {tableNameAsVariable}.{primaryKeyOfTable}));");
-                    classBuilder.AppendLine($"DataTable dt = SqlHelper.ExecuteDataTable(ConnString, CommandType.StoredProcedure, \"{tableName}_Select_By_Id\", paramList.ToArray());");
+                    classBuilder.AppendLine($"paramList.Add(new SqlParameter(@\"{SelectId}\", {SelectId}));");
+                    classBuilder.AppendLine($"DataTable dt = SqlHelper.ExecuteDataTable(ConnString, CommandType.StoredProcedure, \"{SettingHelper.tableName}_Select_By_Id\", paramList.ToArray());");
 
                     classBuilder.AppendLine("if (dt != null && dt.Rows.Count>0)");
                     classBuilder.AppendLine("{");
                     classBuilder.AppendLine("DataRow dr = dt.Rows[0];");
-                    classBuilder.AppendLine($"{ConvertProperCaseStringToCamelCaseString(tableName)} = new {tableName}();");
+                    classBuilder.AppendLine($"{ConvertProperCaseStringToCamelCaseString(SettingHelper.tableName)} = new {SettingHelper.tableName}();");
 
-                    for (int i = 0; i < TableColumnList.Count; i++)
+                    for (int i = 0; i < SettingHelper.TableColumnList.Count; i++)
                     {
-                        var item = TableColumnList.ElementAt(i);
+                        var item = SettingHelper.TableColumnList.ElementAt(i);
                         string value = AssignModelPropertyComingFromDatabase(tableNameAsVariable, item.Key, item.Value.Item1, item.Value.Item2);
                         classBuilder.AppendLine(value);
 
@@ -1182,14 +1210,15 @@ namespace AutoCode.Presentation
                 }
                 else if (SettingHelper.ConnectionType == Enum.ConnectionType.PostgreSQLServer)
                 {
-                    classBuilder.AppendLine($"public {tableName} {tableName}SelectById ({GetColumnTypeForPostgreSql(TableColumnList.First(x => x.Key == primaryKeyOfTable).Value.Item1)} {primaryKeyOfTable})");
+                    string columnTypeforPostgreSql = !string.IsNullOrEmpty(SettingHelper.primaryKeyOfTable) && SettingHelper.primaryKeyOfTable != "" ? GetColumnTypeForPostgreSql(SettingHelper.TableColumnList.First(x => x.Key == SettingHelper.primaryKeyOfTable).Value.Item1) : "int";
+                    classBuilder.AppendLine($"public {SettingHelper.tableName} {SettingHelper.tableName}SelectById ({columnTypeforPostgreSql} {SelectId})");
                     classBuilder.AppendLine("{\r\n\ttry\r\n\t{");
-                    classBuilder.AppendLine($"\t\t{tableName} {ConvertProperCaseStringToCamelCaseString(tableName)} = null;");
+                    classBuilder.AppendLine($"\t\t{SettingHelper.tableName} {ConvertProperCaseStringToCamelCaseString(SettingHelper.tableName)} = null;");
                     classBuilder.AppendLine("\t\tList<NpgsqlParameter> paramList = new List<NpgsqlParameter>();");
-                    classBuilder.AppendLine($"\t\tparamList.Add(new NpgsqlParameter(@\"{primaryKeyOfTable.ToLower()}\", {tableNameAsVariable}.{primaryKeyOfTable}));");
-                    classBuilder.AppendLine($"\t\t{ConvertProperCaseStringToCamelCaseString(tableName)} = PostgreSQLHandler.ExecuteAsObject<{tableName}>(\"{tableName.ToLower()}_select_by_id\", paramList);");
+                    classBuilder.AppendLine($"\t\tparamList.Add(new NpgsqlParameter(@\"{SelectId.ToLower()}\", {SelectId}));");
+                    classBuilder.AppendLine($"\t\t{ConvertProperCaseStringToCamelCaseString(SettingHelper.tableName)} = PostgreSQLHandler.ExecuteAsObject<{SettingHelper.tableName}>(\"{SettingHelper.tableName.ToLower()}_select_by_id\", paramList);");
                 }
-                classBuilder.AppendLine($"\t\treturn {ConvertProperCaseStringToCamelCaseString(tableName)};");
+                classBuilder.AppendLine($"\t\treturn {ConvertProperCaseStringToCamelCaseString(SettingHelper.tableName)};");
                 classBuilder.AppendLine("\t}\r\n\tcatch (Exception ex)\r\n\t{\r\n\t\tthrow ex;\r\n\t}\r\n}");
                 classBuilder.AppendLine("---------------------------------- End Select Record By Id Code ----------------------------------");
                 classBuilder.AppendLine();
@@ -1205,21 +1234,22 @@ namespace AutoCode.Presentation
             try
             {
                 StringBuilder classBuilder = new StringBuilder();
-                string tableNameAsVariable = ConvertProperCaseStringToCamelCaseString(tableName);
+                string deletedId = !string.IsNullOrEmpty(SettingHelper.primaryKeyOfTable) && SettingHelper.primaryKeyOfTable != "" ? SettingHelper.primaryKeyOfTable.ToString() : "Id";
+                string tableNameAsVariable = ConvertProperCaseStringToCamelCaseString(SettingHelper.tableName);
                 classBuilder.AppendLine("---------------------------------- Start Soft Delete Record Code ----------------------------------");
-                classBuilder.AppendLine($"public void {tableName} {tableName}SoftDelete ({tableName} {tableNameAsVariable})");
+                classBuilder.AppendLine($"public void {SettingHelper.tableName} {SettingHelper.tableName}SoftDelete ({SettingHelper.tableName} {tableNameAsVariable})");
                 classBuilder.AppendLine("{\r\n\ttry\r\n\t{");
                 if (SettingHelper.ConnectionType == Enum.ConnectionType.MicrosoftSQLServer)
                 {
                     classBuilder.AppendLine("\t\tList<SqlParameter> paramList = new List<SqlParameter>();");
-                    classBuilder.AppendLine($"\t\tparamList.Add(new SqlParameter(@\"{primaryKeyOfTable}\", {tableNameAsVariable}.{primaryKeyOfTable}));");
-                    classBuilder.AppendLine($"\t\tSqlHelper.ExecuteNonQuery(ConnString, CommandType.StoredProcedure, \"{tableName}_Soft_Delete\", paramList.ToArray());");
+                    classBuilder.AppendLine($"\t\tparamList.Add(new SqlParameter(@\"{deletedId}\", {tableNameAsVariable}.{deletedId}));");
+                    classBuilder.AppendLine($"\t\tSqlHelper.ExecuteNonQuery(ConnString, CommandType.StoredProcedure, \"{SettingHelper.tableName}_Soft_Delete\", paramList.ToArray());");
                 }
                 else if (SettingHelper.ConnectionType == Enum.ConnectionType.PostgreSQLServer)
                 {
                     classBuilder.AppendLine("\t\tList<NpgsqlParameter> paramList = new List<NpgsqlParameter>();");
-                    classBuilder.AppendLine($"\t\tparamList.Add(new NpgsqlParameter(@\"{primaryKeyOfTable.ToLower()}\", {tableNameAsVariable}.{primaryKeyOfTable}));");
-                    classBuilder.AppendLine($"\t\tbool spResult = PostgreSQLHandler.ExecuteAsScalar<bool>(\"{tableName.ToLower()}_softdelete\", paramList);");
+                    classBuilder.AppendLine($"\t\tparamList.Add(new NpgsqlParameter(@\"{deletedId.ToLower()}\", {tableNameAsVariable}.{deletedId}));");
+                    classBuilder.AppendLine($"\t\tbool spResult = PostgreSQLHandler.ExecuteAsScalar<bool>(\"{SettingHelper.tableName.ToLower()}_softdelete\", paramList);");
                 }
                 classBuilder.AppendLine("\t}\r\n\tcatch (Exception ex)\r\n\t{\r\n\t\tthrow ex;\r\n\t}\r\n}");
                 classBuilder.AppendLine("---------------------------------- End Soft Delete Record Code ----------------------------------");
@@ -1236,21 +1266,22 @@ namespace AutoCode.Presentation
             try
             {
                 StringBuilder classBuilder = new StringBuilder();
-                string tableNameAsVariable = ConvertProperCaseStringToCamelCaseString(tableName);
+                string deletedId = SettingHelper.primaryKeyOfTable != "" ? SettingHelper.primaryKeyOfTable.ToString() : "Id";
+                string tableNameAsVariable = ConvertProperCaseStringToCamelCaseString(SettingHelper.tableName);
                 classBuilder.AppendLine("---------------------------------- Start Hard Delete Record Code ----------------------------------");
-                classBuilder.AppendLine($"public void {tableName} {tableName}HardDelete ({tableName} {tableNameAsVariable})");
+                classBuilder.AppendLine($"public void {SettingHelper.tableName} {SettingHelper.tableName}HardDelete ({SettingHelper.tableName} {tableNameAsVariable})");
                 classBuilder.AppendLine("{\r\n\ttry\r\n\t{");
                 if (SettingHelper.ConnectionType == Enum.ConnectionType.MicrosoftSQLServer)
                 {
                     classBuilder.AppendLine("\t\tList<SqlParameter> paramList = new List<SqlParameter>();");
-                    classBuilder.AppendLine($"\t\tparamList.Add(new SqlParameter(@\"{primaryKeyOfTable}\", {tableNameAsVariable}.{primaryKeyOfTable}));");
-                    classBuilder.AppendLine($"\t\tSqlHelper.ExecuteNonQuery(ConnString, CommandType.StoredProcedure, \"{tableName}_Hard_Delete\", paramList.ToArray());");
+                    classBuilder.AppendLine($"\t\tparamList.Add(new SqlParameter(@\"{deletedId}\", {tableNameAsVariable}.{deletedId}));");
+                    classBuilder.AppendLine($"\t\tSqlHelper.ExecuteNonQuery(ConnString, CommandType.StoredProcedure, \"{SettingHelper.tableName}_Hard_Delete\", paramList.ToArray());");
                 }
                 else if (SettingHelper.ConnectionType == Enum.ConnectionType.PostgreSQLServer)
                 {
                     classBuilder.AppendLine("\t\tList<NpgsqlParameter> paramList = new List<NpgsqlParameter>();");
-                    classBuilder.AppendLine($"\t\tparamList.Add(new NpgsqlParameter(@\"{primaryKeyOfTable.ToLower()}\", {tableNameAsVariable}.{primaryKeyOfTable}));");
-                    classBuilder.AppendLine($"\t\tbool spResult = PostgreSQLHandler.ExecuteAsScalar<bool>(\"{tableName.ToLower()}_harddelete\", paramList);");
+                    classBuilder.AppendLine($"\t\tparamList.Add(new NpgsqlParameter(@\"{deletedId.ToLower()}\", {tableNameAsVariable}.{deletedId}));");
+                    classBuilder.AppendLine($"\t\tbool spResult = PostgreSQLHandler.ExecuteAsScalar<bool>(\"{SettingHelper.tableName.ToLower()}_harddelete\", paramList);");
                 }
                 classBuilder.AppendLine("\t}\r\n\tcatch (Exception ex)\r\n\t{\r\n\t\tthrow ex;\r\n\t}\r\n}");
                 classBuilder.AppendLine("---------------------------------- End Hard Delete Record Code ----------------------------------");
@@ -1282,22 +1313,18 @@ namespace AutoCode.Presentation
                     case "int":
                     case "bigint":
                         return $"@{columnName} {type} = 0";
-                    //break;
                     case "varchar":
                     case "nvarchar":
                     case "text":
                     case "ntext":
                         return $"@{columnName} {type} = ''";
-                    //break;
                     case "datetime":
                     case "smalldatetime":
                     case "date":
                     case "time":
                         return $"@{columnName} {type} = null";
-                    //break;
                     default:
                         throw new Exception("New Type Found For SQL Parameter");
-                        //break;
                 }
             }
             catch (Exception ex)
@@ -1659,6 +1686,24 @@ namespace AutoCode.Presentation
 
                     default:
                         throw new Exception($"Unsupported data type: {type}");
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        private string GetColumnTypeForSP(string type)
+        {
+            try
+            {
+                switch (type)
+                {
+                    case "uuid":
+                        return type;
+                    default:
+                        return type;
                 }
             }
             catch (Exception ex)
