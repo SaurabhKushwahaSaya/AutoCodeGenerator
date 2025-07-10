@@ -96,6 +96,7 @@
     <Compile Include="FlutterForm.xaml.cs">
       <DependentUpon>FlutterForm.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Helpers\DatabaseHelper.cs" />
     <Compile Include="Helpers\DataSourceHelper.cs" />
     <Compile Include="Helpers\Null.cs" />
     <Compile Include="Helpers\SettingHelper.cs" />

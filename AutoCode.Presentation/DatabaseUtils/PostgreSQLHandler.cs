@@ -15,8 +15,6 @@ namespace AutoCode.Presentation.DatabaseUtils
     {
         public PostgreSQLHandler() { ConnectionString = SettingHelper.PostgreSqlConnectionStringBuilder.ConnectionString; }
 
-
-
         public string ConnectionString { get; set; }
 
         /// <summary>
@@ -449,41 +447,7 @@ namespace AutoCode.Presentation.DatabaseUtils
             }
         }
 
-        //public string Select(string spName, List<NpgsqlParameter> parameters)
-        //{
-        //    try
-        //    {
-        //        DataSet ds = new DataSet();
-        //        using (NpgsqlConnection conn = new NpgsqlConnection(ConnectionString))
-        //        {
-        //            conn.Open();
-        //            if (conn == null)
-        //                throw new ArgumentNullException("connection");
-
-        //            string functionCommand = "Select * from " + spName + "(" + string.Join(", ", parameters.Select(p => "@" + p.ParameterName)) + ")";
-        //            using (NpgsqlCommand command = new NpgsqlCommand(functionCommand, conn))
-        //            {
-        //                command.CommandType = CommandType.Text;
-        //                foreach (var param in parameters)
-        //                    command.Parameters.AddWithValue(param.ParameterName, param.Value);
-
-        //                NpgsqlDataAdapter da = new NpgsqlDataAdapter(command);
-        //                da.Fill(ds);
-        //            }
-        //            string JSONString = JsonConvert.SerializeObject(ds, Formatting.Indented);
-        //            return JSONString;
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        throw ex;
-        //    }
-        //    finally
-        //    {
-        //        UpdateSPExecutionCount(spName);
-        //    }
-        //}
-
+       
         /// <summary>
         /// Execute as object.
         /// </summary>
