@@ -1,4 +1,5 @@
 ﻿using AutoCode.Presentation.DatabaseUtils;
+using AutoCode.Presentation.Helpers;
 using AutoCode.Presentation.Model;
 using Newtonsoft.Json;
 using Npgsql;
@@ -59,6 +60,20 @@ namespace AutoCode.Presentation
         private void btnClose_Click(object sender, RoutedEventArgs e)
         {
             App.Current.Shutdown();
+        }
+        public string GetConnectionString()
+        {
+            NpgsqlConnectionStringBuilder npgsqlConnectionStringBuilder = new NpgsqlConnectionStringBuilder()
+            {
+                Database = txtDatabaseName.Text,
+                Host = txtServerName.Text,
+                Port = 5432,
+                Username = txtUserName.Text,
+                Password = txtPassword.Password,
+                Timeout = 1024,
+                CommandTimeout = 0
+            };
+            return npgsqlConnectionStringBuilder.ConnectionString;
         }
         private void btnConnectServer_Click(object sender, RoutedEventArgs e)
         {
@@ -280,6 +295,7 @@ namespace AutoCode.Presentation
                     CommandTimeout = 0
                 };
                 SettingHelper.PostgreSqlConnectionStringBuilder = npgsqlConnectionStringBuilder;
+                DatabaseHelper.DatabaseConnectionString = SettingHelper.PostgreSqlConnectionStringBuilder.ConnectionString.ToString();
                 PostgreSQLHandler postgreSQLHandler = new PostgreSQLHandler();
                 bool result = postgreSQLHandler.CheckDatabaseConnectoin();
                 e.Result = result;
@@ -300,6 +316,7 @@ namespace AutoCode.Presentation
                     MessageBox.Show("Database Connection Established.");
                     DatabaseTableList databaseTableList = new DatabaseTableList();
                     SettingHelper.ConnectionType = Enum.ConnectionType.MicrosoftSQLServer;
+                    //ConnectionString.DtabaseConnectionString = ;
                     this.Hide();
                     databaseTableList.ShowDialog();
                     this.Show();
@@ -362,6 +379,7 @@ namespace AutoCode.Presentation
                     UserID = sqlUserName,
                     Password = sqlPassword
                 };
+                DatabaseHelper.DatabaseConnectionString = SettingHelper.SqlConnectionStringBuilder.ConnectionString;
                 SqlConnection conn = new SqlConnection(SettingHelper.SqlConnectionStringBuilder.ConnectionString);
                 conn.Open();
                 conn.Close();

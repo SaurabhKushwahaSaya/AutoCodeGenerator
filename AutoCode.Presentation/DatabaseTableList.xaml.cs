@@ -2,6 +2,7 @@
 using AutoCode.Presentation.DatabaseUtils;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Npgsql;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -32,6 +33,7 @@ namespace AutoCode.Presentation
             InitializeComponent();
             this.Loaded += DatabaseTableList_Loaded;
         }
+
         private void DatabaseTableList_Loaded(object sender, RoutedEventArgs e)
         {
             try
@@ -656,6 +658,7 @@ namespace AutoCode.Presentation
             try
             {
                 StringBuilder classBuilder = new StringBuilder();
+                StringBuilder parameters = new StringBuilder();
                 StringBuilder WhereBuilder = new StringBuilder();
                 string SelectId = !string.IsNullOrEmpty(SettingHelper.primaryKeyOfTable) && SettingHelper.primaryKeyOfTable != "" ? SettingHelper.primaryKeyOfTable.ToString() : "Id";
                 classBuilder.AppendLine("---------------------------------- Start Select SP Code ----------------------------------");
@@ -693,26 +696,33 @@ namespace AutoCode.Presentation
                     string columnTypeforPostgreSql = !string.IsNullOrEmpty(SettingHelper.primaryKeyOfTable) && SettingHelper.primaryKeyOfTable != "" ? GetColumnTypeForSP(SettingHelper.TableColumnList.First(x => x.Key == SettingHelper.primaryKeyOfTable).Value.Item1) : "int";
                     classBuilder.Append($"CREATE OR REPLACE FUNCTION public.{SettingHelper.tableName.ToLower()}_select_by_id");
                     classBuilder.Append($"({SelectId.ToLower()} {columnTypeforPostgreSql})");
-                    classBuilder.AppendLine($"\r\nRETURNS SETOF \"" + SettingHelper.tableName + "\"");
-                    classBuilder.AppendLine($"LANGUAGE plpgsql");
-                    classBuilder.AppendLine($"AS $function$");
-                    classBuilder.AppendLine($"begin");
-                    classBuilder.Append($"   RETURN QUERY \n select ");
+                    classBuilder.AppendLine($"\n RETURNS TABLE (");
+                    parameters.Append($"   RETURN QUERY \n select ");
+                    
                     for (int i = 0; i < SettingHelper.TableColumnList.Count(); i++)
                     {
                         var item = SettingHelper.TableColumnList.ElementAt(i);
                         if (i != 0)
+                        {
                             classBuilder.Append($",");
+                            parameters.Append($",");
+                        }
                         else
-                            classBuilder.Append("\t");
-                        classBuilder.Append($" \"{item.Key.ToString()}\"");
+                            parameters.Append("\t");
+                        classBuilder.Append($" \"{item.Key.ToString()}\" {item.Value.Item1}");
+                        parameters.Append($" \"{item.Key.ToString()}\"");
                     }
-                    classBuilder.AppendLine($"\r\n\tfrom \"{SettingHelper.tableName}\"");
-                    classBuilder.AppendLine($"\twhere \"{SelectId}\" = {SelectId.ToLower()};");
-                    classBuilder.AppendLine($"END\r\n$function$\r\n;");
+                    parameters.AppendLine($"\r\n\tfrom \"{SettingHelper.tableName}\"");
+                    classBuilder.AppendLine($")");
+                    classBuilder.AppendLine($"\nLANGUAGE plpgsql");
+                    classBuilder.AppendLine($"AS $function$");
+                    classBuilder.AppendLine($"begin");
+                    
+                    parameters.AppendLine($"\twhere \"{SelectId}\" = {SelectId.ToLower()};");
+                    parameters.AppendLine($"END\r\n$function$\r\n;");
                 }
                 WhereBuilder.AppendLine($"---------------------------------- End Select SP Code ----------------------------------");
-                return classBuilder.ToString() + WhereBuilder.ToString();
+                return classBuilder.ToString() + parameters.ToString() + WhereBuilder.ToString();
             }
             catch (Exception ex)
             {
@@ -1019,7 +1029,7 @@ namespace AutoCode.Presentation
                 }
                 classBuilder.AppendLine($"                if (dt.Rows.Count > 0)\r\n                {{");
                 classBuilder.AppendLine($"                    foreach (DataRow row in dt.Rows)\r\n                    {{");
-                classBuilder.AppendLine($"                        {SettingHelper.tableName} {SettingHelper.tableName.ToLower()}Data = new Testing\r\n                        {{");
+                classBuilder.AppendLine($"                        {SettingHelper.tableName} {SettingHelper.tableName.ToLower()}Data = new {SettingHelper.tableName}\r\n                        {{");
                 for (int i = 0; i < SettingHelper.TableColumnList.Count(); i++)
                 {
                     var item = SettingHelper.TableColumnList.ElementAt(i);
@@ -1077,7 +1087,7 @@ namespace AutoCode.Presentation
                             classBuilder.AppendLine($"\t\tparamList.Add(new NpgsqlParameter(@\"{item.Key.ToLower().ToString()}\", {tableNameAsVariable}.{item.Key}));");
                         }
                     }
-                    classBuilder.AppendLine($"\t\tbool spResult = PostgreSQLHandler.ExecuteAsScalar<bool>(\"{SettingHelper.tableName.ToLower()}_add\", paramList);");
+                    classBuilder.AppendLine($"\t\tbool spResult = sayaPostgreSQL.ExecuteScalar<bool>(\"{SettingHelper.tableName.ToLower()}_add\", paramList);");
                 }
                 classBuilder.AppendLine("\t}\r\n\tcatch (Exception ex)\r\n\t{\r\n\t\tthrow ex;\r\n\t}\r\n}");
                 classBuilder.AppendLine("---------------------------------- End Add Record Code ----------------------------------");
@@ -1116,10 +1126,10 @@ namespace AutoCode.Presentation
                         var item = SettingHelper.TableColumnList.ElementAt(i);
                         //if (item.Key.ToLower().Trim() != SettingHelper.primaryKeyOfTable.ToLower().Trim())
                         //{
-                            classBuilder.AppendLine($"\t\tparamList.Add(new NpgsqlParameter(@\"{item.Key.ToLower().ToString()}\", {tableNameAsVariable}.{item.Key}));");
+                        classBuilder.AppendLine($"\t\tparamList.Add(new NpgsqlParameter(@\"{item.Key.ToLower().ToString()}\", {tableNameAsVariable}.{item.Key}));");
                         //}
                     }
-                    classBuilder.AppendLine($"\t\tbool spResult = PostgreSQLHandler.ExecuteAsScalar<bool>(\"{SettingHelper.tableName.ToLower()}_update\", paramList);");
+                    classBuilder.AppendLine($"\t\tbool spResult = sayaPostgreSQL.ExecuteAsScalar<bool>(\"{SettingHelper.tableName.ToLower()}_update\", paramList);");
                 }
                 classBuilder.AppendLine("\t}\r\n\tcatch (Exception ex)\r\n\t{\r\n\t\tthrow ex;\r\n\t}\r\n}");
                 classBuilder.AppendLine("---------------------------------- End Update Record Code ----------------------------------");
@@ -1211,14 +1221,18 @@ namespace AutoCode.Presentation
                 else if (SettingHelper.ConnectionType == Enum.ConnectionType.PostgreSQLServer)
                 {
                     string columnTypeforPostgreSql = !string.IsNullOrEmpty(SettingHelper.primaryKeyOfTable) && SettingHelper.primaryKeyOfTable != "" ? GetColumnTypeForPostgreSql(SettingHelper.TableColumnList.First(x => x.Key == SettingHelper.primaryKeyOfTable).Value.Item1) : "int";
-                    classBuilder.AppendLine($"public {SettingHelper.tableName} {SettingHelper.tableName}SelectById ({columnTypeforPostgreSql} {SelectId})");
+                    //classBuilder.AppendLine($"public {SettingHelper.tableName} {SettingHelper.tableName}SelectById ({columnTypeforPostgreSql} {SelectId})");
+                    classBuilder.AppendLine($"public string {SettingHelper.tableName}SelectById ({columnTypeforPostgreSql} {SelectId})");
                     classBuilder.AppendLine("{\r\n\ttry\r\n\t{");
-                    classBuilder.AppendLine($"\t\t{SettingHelper.tableName} {ConvertProperCaseStringToCamelCaseString(SettingHelper.tableName)} = null;");
+                    //classBuilder.AppendLine($"\t\t{SettingHelper.tableName} {ConvertProperCaseStringToCamelCaseString(SettingHelper.tableName)} = null;");
                     classBuilder.AppendLine("\t\tList<NpgsqlParameter> paramList = new List<NpgsqlParameter>();");
                     classBuilder.AppendLine($"\t\tparamList.Add(new NpgsqlParameter(@\"{SelectId.ToLower()}\", {SelectId}));");
-                    classBuilder.AppendLine($"\t\t{ConvertProperCaseStringToCamelCaseString(SettingHelper.tableName)} = PostgreSQLHandler.ExecuteAsObject<{SettingHelper.tableName}>(\"{SettingHelper.tableName.ToLower()}_select_by_id\", paramList);");
+                    //classBuilder.AppendLine($"\t\t{ConvertProperCaseStringToCamelCaseString(SettingHelper.tableName)} = PostgreSQLHandler.ExecuteAsObject<{SettingHelper.tableName}>(\"{SettingHelper.tableName.ToLower()}_select_by_id\", paramList);");
+                    //classBuilder.AppendLine($"\t\t string Data = PostgreSQLHandler.ExecuteAsObject<{SettingHelper.tableName}>(\"{SettingHelper.tableName.ToLower()}_select_by_id\", paramList);");
+                    classBuilder.AppendLine($"\t\t string Data = sayaPostgreSQL.Select(\"{SettingHelper.tableName.ToLower()}_select_by_id\", paramList);");
                 }
-                classBuilder.AppendLine($"\t\treturn {ConvertProperCaseStringToCamelCaseString(SettingHelper.tableName)};");
+                //classBuilder.AppendLine($"\t\treturn {ConvertProperCaseStringToCamelCaseString(SettingHelper.tableName)};");
+                classBuilder.AppendLine($"\t\treturn Data;");
                 classBuilder.AppendLine("\t}\r\n\tcatch (Exception ex)\r\n\t{\r\n\t\tthrow ex;\r\n\t}\r\n}");
                 classBuilder.AppendLine("---------------------------------- End Select Record By Id Code ----------------------------------");
                 classBuilder.AppendLine();
