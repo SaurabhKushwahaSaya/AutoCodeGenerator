@@ -520,7 +520,7 @@ namespace AutoCode.Presentation
 
                         if (item.Value.Item3)
                         {
-                            WhereBuilder.AppendLine($"\r\n\tWHERE \"{item.Key}\" = {item.Key.ToLower()}");
+                            WhereBuilder.AppendLine($"\r\n\tWHERE \"{item.Key}\" = {item.Key.ToLower()};");
                         }
                         else
                         {
@@ -591,7 +591,7 @@ namespace AutoCode.Presentation
                     classBuilder.AppendLine($"DECLARE  affected INTEGER;");
                     classBuilder.AppendLine($"begin");
                     classBuilder.Append($"\r\n\tUPDATE \"{SettingHelper.tableName}\"");
-                    classBuilder.Append($"\r\n\tSET \"IsDeleted\" = 1 \r\n\tWhere \"{deletedId}\" = {deletedId.ToLower()};");
+                    classBuilder.Append($"\r\n\tSET \"IsDeleted\" = TRUE \r\n\tWhere \"{deletedId}\" = {deletedId.ToLower()};");
                     classBuilder.AppendLine($"\r\n\tGET DIAGNOSTICS affected = ROW_COUNT;\r\n\tIF affected = 1 THEN\r\n \t\tRETURN true;\r\n\tELSE\r\n\t\tRETURN false;\r\n\tEND IF;\r\n  END \r\n $function$\r\n;");
                 }
                 WhereBuilder.AppendLine($"---------------------------------- End Soft Delete SP Code ----------------------------------");
@@ -1025,7 +1025,8 @@ namespace AutoCode.Presentation
                 }
                 else if (SettingHelper.ConnectionType == Enum.ConnectionType.PostgreSQLServer)
                 {
-                    classBuilder.AppendLine($"                DataTable dt = PostgreSQLHandler.ExecuteDataTable(connectionString, \"public.get_allDataOf_{SettingHelper.tableName.ToLower()}();\");");
+                    classBuilder.AppendLine("\t PostgreSQLHandler postgreSQLHandler = new PostgreSQLHandler();");
+                    classBuilder.AppendLine($"                DataTable dt = postgreSQLHandler.ExecuteSQL(\"SELECT * FROM get_allDataOf_{SettingHelper.tableName.ToLower()}()\");");
                 }
                 classBuilder.AppendLine($"                if (dt.Rows.Count > 0)\r\n                {{");
                 classBuilder.AppendLine($"                    foreach (DataRow row in dt.Rows)\r\n                    {{");
@@ -1061,7 +1062,7 @@ namespace AutoCode.Presentation
                 StringBuilder classBuilder = new StringBuilder();
                 string tableNameAsVariable = ConvertProperCaseStringToCamelCaseString(SettingHelper.tableName);
                 classBuilder.AppendLine("---------------------------------- Start Add Record Code ----------------------------------");
-                classBuilder.AppendLine($"public void {SettingHelper.tableName}Insert ({SettingHelper.tableName} {tableNameAsVariable})");
+                classBuilder.AppendLine($"public static void {SettingHelper.tableName}Insert ({SettingHelper.tableName} {tableNameAsVariable})");
                 classBuilder.AppendLine("{\r\n\ttry\r\n\t{");
                 if (SettingHelper.ConnectionType == Enum.ConnectionType.MicrosoftSQLServer)
                 {
@@ -1087,7 +1088,8 @@ namespace AutoCode.Presentation
                             classBuilder.AppendLine($"\t\tparamList.Add(new NpgsqlParameter(@\"{item.Key.ToLower().ToString()}\", {tableNameAsVariable}.{item.Key}));");
                         }
                     }
-                    classBuilder.AppendLine($"\t\tbool spResult = sayaPostgreSQL.ExecuteScalar<bool>(\"{SettingHelper.tableName.ToLower()}_add\", paramList);");
+                    classBuilder.AppendLine("\t\tPostgreSQLHandler postgreSQLHandler = new PostgreSQLHandler();");
+                    classBuilder.AppendLine($"\t\tbool spResult = postgreSQLHandler.ExecuteAsScalar<bool>(\"{SettingHelper.tableName.ToLower()}_add\", paramList);");
                 }
                 classBuilder.AppendLine("\t}\r\n\tcatch (Exception ex)\r\n\t{\r\n\t\tthrow ex;\r\n\t}\r\n}");
                 classBuilder.AppendLine("---------------------------------- End Add Record Code ----------------------------------");
@@ -1106,7 +1108,7 @@ namespace AutoCode.Presentation
                 StringBuilder classBuilder = new StringBuilder();
                 string tableNameAsVariable = ConvertProperCaseStringToCamelCaseString(SettingHelper.tableName);
                 classBuilder.AppendLine("---------------------------------- Start Update Record Code ----------------------------------");
-                classBuilder.AppendLine($"public void {SettingHelper.tableName}Update ({SettingHelper.tableName} {tableNameAsVariable})");
+                classBuilder.AppendLine($"public static void {SettingHelper.tableName}Update ({SettingHelper.tableName} {tableNameAsVariable})");
                 classBuilder.AppendLine("{\r\n\ttry\r\n\t{");
                 if (SettingHelper.ConnectionType == Enum.ConnectionType.MicrosoftSQLServer)
                 {
@@ -1129,7 +1131,8 @@ namespace AutoCode.Presentation
                         classBuilder.AppendLine($"\t\tparamList.Add(new NpgsqlParameter(@\"{item.Key.ToLower().ToString()}\", {tableNameAsVariable}.{item.Key}));");
                         //}
                     }
-                    classBuilder.AppendLine($"\t\tbool spResult = sayaPostgreSQL.ExecuteAsScalar<bool>(\"{SettingHelper.tableName.ToLower()}_update\", paramList);");
+                        classBuilder.AppendLine("\t\tPostgreSQLHandler postgreSQLHandler = new PostgreSQLHandler();");
+                    classBuilder.AppendLine($"\t\tbool spResult = postgreSQLHandler.ExecuteAsScalar<bool>(\"{SettingHelper.tableName.ToLower()}_update\", paramList);");
                 }
                 classBuilder.AppendLine("\t}\r\n\tcatch (Exception ex)\r\n\t{\r\n\t\tthrow ex;\r\n\t}\r\n}");
                 classBuilder.AppendLine("---------------------------------- End Update Record Code ----------------------------------");
@@ -1197,7 +1200,7 @@ namespace AutoCode.Presentation
                 if (SettingHelper.ConnectionType == Enum.ConnectionType.MicrosoftSQLServer)
                 {
                     string columnTypeforSqlServer = !string.IsNullOrEmpty(SettingHelper.primaryKeyOfTable) && SettingHelper.primaryKeyOfTable != "" ? GetColumnTypeForMSSql(SettingHelper.TableColumnList.First(x => x.Key == SettingHelper.primaryKeyOfTable).Value.Item1) : "int";
-                    classBuilder.AppendLine($"public {SettingHelper.tableName} {SettingHelper.tableName}SelectById ({columnTypeforSqlServer} {SelectId})");
+                    classBuilder.AppendLine($"public static {SettingHelper.tableName} {SettingHelper.tableName}SelectById ({columnTypeforSqlServer} {SelectId})");
                     classBuilder.AppendLine("{\r\n\ttry\r\n\t{");
                     classBuilder.AppendLine($"\t\t{SettingHelper.tableName} {ConvertProperCaseStringToCamelCaseString(SettingHelper.tableName)} = null;");
                     classBuilder.AppendLine($"");
@@ -1222,7 +1225,7 @@ namespace AutoCode.Presentation
                 {
                     string columnTypeforPostgreSql = !string.IsNullOrEmpty(SettingHelper.primaryKeyOfTable) && SettingHelper.primaryKeyOfTable != "" ? GetColumnTypeForPostgreSql(SettingHelper.TableColumnList.First(x => x.Key == SettingHelper.primaryKeyOfTable).Value.Item1) : "int";
                     //classBuilder.AppendLine($"public {SettingHelper.tableName} {SettingHelper.tableName}SelectById ({columnTypeforPostgreSql} {SelectId})");
-                    classBuilder.AppendLine($"public string {SettingHelper.tableName}SelectById ({columnTypeforPostgreSql} {SelectId})");
+                    classBuilder.AppendLine($"public static string {SettingHelper.tableName}SelectById ({columnTypeforPostgreSql} {SelectId})");
                     classBuilder.AppendLine("{\r\n\ttry\r\n\t{");
                     //classBuilder.AppendLine($"\t\t{SettingHelper.tableName} {ConvertProperCaseStringToCamelCaseString(SettingHelper.tableName)} = null;");
                     classBuilder.AppendLine("\t\tList<NpgsqlParameter> paramList = new List<NpgsqlParameter>();");
@@ -1251,7 +1254,7 @@ namespace AutoCode.Presentation
                 string deletedId = !string.IsNullOrEmpty(SettingHelper.primaryKeyOfTable) && SettingHelper.primaryKeyOfTable != "" ? SettingHelper.primaryKeyOfTable.ToString() : "Id";
                 string tableNameAsVariable = ConvertProperCaseStringToCamelCaseString(SettingHelper.tableName);
                 classBuilder.AppendLine("---------------------------------- Start Soft Delete Record Code ----------------------------------");
-                classBuilder.AppendLine($"public void {SettingHelper.tableName} {SettingHelper.tableName}SoftDelete ({SettingHelper.tableName} {tableNameAsVariable})");
+                classBuilder.AppendLine($"public static void {SettingHelper.tableName}SoftDelete ({SettingHelper.tableName} {tableNameAsVariable})");
                 classBuilder.AppendLine("{\r\n\ttry\r\n\t{");
                 if (SettingHelper.ConnectionType == Enum.ConnectionType.MicrosoftSQLServer)
                 {
@@ -1263,7 +1266,8 @@ namespace AutoCode.Presentation
                 {
                     classBuilder.AppendLine("\t\tList<NpgsqlParameter> paramList = new List<NpgsqlParameter>();");
                     classBuilder.AppendLine($"\t\tparamList.Add(new NpgsqlParameter(@\"{deletedId.ToLower()}\", {tableNameAsVariable}.{deletedId}));");
-                    classBuilder.AppendLine($"\t\tbool spResult = PostgreSQLHandler.ExecuteAsScalar<bool>(\"{SettingHelper.tableName.ToLower()}_softdelete\", paramList);");
+                    classBuilder.AppendLine("\t\tPostgreSQLHandler postgreSQLHandler = new PostgreSQLHandler();");
+                    classBuilder.AppendLine($"\t\tbool spResult = postgreSQLHandler.ExecuteAsScalar<bool>(\"{SettingHelper.tableName.ToLower()}_softdelete\", paramList);");
                 }
                 classBuilder.AppendLine("\t}\r\n\tcatch (Exception ex)\r\n\t{\r\n\t\tthrow ex;\r\n\t}\r\n}");
                 classBuilder.AppendLine("---------------------------------- End Soft Delete Record Code ----------------------------------");
@@ -1283,7 +1287,7 @@ namespace AutoCode.Presentation
                 string deletedId = SettingHelper.primaryKeyOfTable != "" ? SettingHelper.primaryKeyOfTable.ToString() : "Id";
                 string tableNameAsVariable = ConvertProperCaseStringToCamelCaseString(SettingHelper.tableName);
                 classBuilder.AppendLine("---------------------------------- Start Hard Delete Record Code ----------------------------------");
-                classBuilder.AppendLine($"public void {SettingHelper.tableName} {SettingHelper.tableName}HardDelete ({SettingHelper.tableName} {tableNameAsVariable})");
+                classBuilder.AppendLine($"public static void {SettingHelper.tableName}HardDelete ({SettingHelper.tableName} {tableNameAsVariable})");
                 classBuilder.AppendLine("{\r\n\ttry\r\n\t{");
                 if (SettingHelper.ConnectionType == Enum.ConnectionType.MicrosoftSQLServer)
                 {
@@ -1295,7 +1299,8 @@ namespace AutoCode.Presentation
                 {
                     classBuilder.AppendLine("\t\tList<NpgsqlParameter> paramList = new List<NpgsqlParameter>();");
                     classBuilder.AppendLine($"\t\tparamList.Add(new NpgsqlParameter(@\"{deletedId.ToLower()}\", {tableNameAsVariable}.{deletedId}));");
-                    classBuilder.AppendLine($"\t\tbool spResult = PostgreSQLHandler.ExecuteAsScalar<bool>(\"{SettingHelper.tableName.ToLower()}_harddelete\", paramList);");
+                    classBuilder.AppendLine("\t\tPostgreSQLHandler postgreSQLHandler = new PostgreSQLHandler();");
+                    classBuilder.AppendLine($"\t\tbool spResult = postgreSQLHandler.ExecuteAsScalar<bool>(\"{SettingHelper.tableName.ToLower()}_harddelete\", paramList);");
                 }
                 classBuilder.AppendLine("\t}\r\n\tcatch (Exception ex)\r\n\t{\r\n\t\tthrow ex;\r\n\t}\r\n}");
                 classBuilder.AppendLine("---------------------------------- End Hard Delete Record Code ----------------------------------");
