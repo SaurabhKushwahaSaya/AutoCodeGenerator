@@ -20,7 +20,7 @@ namespace AutoCode.Presentation
     public partial class ColumnSelectionForm : Window
     {
         public static Dictionary<string, Tuple<string, bool, bool>> Temp_TableColumnList1 = new Dictionary<string, Tuple<string, bool, bool>>();
-        
+
         public ColumnSelectionForm()
         {
             InitializeComponent();
@@ -41,7 +41,8 @@ namespace AutoCode.Presentation
             foreach (var item in Temp_TableColumnList1)
             {
                 CheckBox checkBox = new CheckBox();
-                if (item.Key.ToString() == SettingHelper.Temp_primaryKeyOfTable.ToString() || item.Key.ToString() == "Id" || item.Key.ToString() == "id")
+                List<string> UncheckColumns = new List<string>() { "createddate", "createdby", "modifiedby", "modifieddate","modifyby","modifydate" };
+                if (item.Key.ToString() == SettingHelper.Temp_primaryKeyOfTable.ToString() || item.Key.ToLower() == "id")
                 {
                     checkBox = new CheckBox
                     {
@@ -51,6 +52,17 @@ namespace AutoCode.Presentation
                         VerticalContentAlignment = VerticalAlignment.Top,
                         IsChecked = true,
                         IsEnabled = false
+                    };
+                }
+                else if (UncheckColumns.Contains(item.Key.ToLower()))
+                {
+                    checkBox = new CheckBox
+                    {
+                        Content = item.Key,
+                        Margin = new Thickness(5),
+                        FontSize = 15,
+                        VerticalContentAlignment = VerticalAlignment.Top,
+                        IsChecked = false
                     };
                 }
                 else
@@ -64,7 +76,6 @@ namespace AutoCode.Presentation
                         IsChecked = true
                     };
                 }
-                // Optional: attach an event handler if you want to track changes
                 checkBox.Checked += CheckBox_Checked;
                 checkBox.Unchecked += CheckBox_Unchecked;
                 CheckBoxContainer.Children.Add(checkBox);
