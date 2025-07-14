@@ -738,7 +738,7 @@ namespace AutoCode.Presentation
                 string tableNameAsVariable = ConvertProperCaseStringToCamelCaseString(SettingHelper.tableName);
                 string tableListAsVariable = $"{ConvertProperCaseStringToCamelCaseString(SettingHelper.tableName)}List";
 
-                classBuilder.AppendLine($"public PaginationModel {SettingHelper.tableName}SelectListWithPaginationAndSearch(DataTablePagintaion dataTablePagintaion)");
+                classBuilder.AppendLine($"public static PaginationModel {SettingHelper.tableName}SelectListWithPaginationAndSearch(DataTablePagintaion dataTablePagintaion)");
                 classBuilder.AppendLine("{\r\n\ttry\r\n\t{");
                 classBuilder.AppendLine($"\t\tPaginationModel paginationModel = new PaginationModel();");
                 classBuilder.AppendLine($"\t\tint skip = ((dataTablePagintaion.PageIndex - 1) * dataTablePagintaion.PageSize);");
@@ -771,9 +771,10 @@ namespace AutoCode.Presentation
                     classBuilder.AppendLine($"\t\tparamList.Add(new NpgsqlParameter(@\"searchtext\", dataTablePagintaion.SearchText));");
                     classBuilder.AppendLine($"\t\tparamList.Add(new NpgsqlParameter(@\"sortcolumn\", dataTablePagintaion.SortField));");
                     classBuilder.AppendLine($"\t\tparamList.Add(new NpgsqlParameter(@\"sorttype\", dataTablePagintaion.SortType));");
-                    classBuilder.AppendLine($"\t\tList<DataListModel> dataList = PostgreSQLHandler.ExecuteAsObject<List<DataListModel>(\"{SettingHelper.tableName.ToLower()}_select_list_with_pagination_search_and_sort\", paramList);");
-                    classBuilder.AppendLine("\t\tint totalRowsCount = 0;\r\n\t\tif (dataList != null && dataList.Any())");
-                    classBuilder.AppendLine("\t\t\ttotalRowsCount = dataList.First().TotalCount;");
+                    classBuilder.AppendLine($"\t\tPostgreSQLHandler postgreSQLHandler = new PostgreSQLHandler();");
+                    classBuilder.AppendLine($"\t\tList<DataListModel> dataList = postgreSQLHandler.ExecuteAsObject<List<DataListModel>>\t\t(\"{SettingHelper.tableName.ToLower()}_select_list_with_pagination_search_and_sort\", paramList);");
+                    classBuilder.AppendLine($"\t\tlong totalRowsCount = 0;\r\n\t\tif (dataList != null && dataList.Any())");
+                    classBuilder.AppendLine($"\t\t\ttotalRowsCount = dataList.First().TotalCount;");
                     classBuilder.AppendLine($"\t\tstring jsonString = JsonConvert.SerializeObject(dataList);");
                     classBuilder.AppendLine($"\t\tList<{SettingHelper.tableName}> objList = JsonConvert.DeserializeObject<List<{SettingHelper.tableName}>>(jsonString);");
                 }
@@ -1232,7 +1233,8 @@ namespace AutoCode.Presentation
                     classBuilder.AppendLine($"\t\tparamList.Add(new NpgsqlParameter(@\"{SelectId.ToLower()}\", {SelectId}));");
                     //classBuilder.AppendLine($"\t\t{ConvertProperCaseStringToCamelCaseString(SettingHelper.tableName)} = PostgreSQLHandler.ExecuteAsObject<{SettingHelper.tableName}>(\"{SettingHelper.tableName.ToLower()}_select_by_id\", paramList);");
                     //classBuilder.AppendLine($"\t\t string Data = PostgreSQLHandler.ExecuteAsObject<{SettingHelper.tableName}>(\"{SettingHelper.tableName.ToLower()}_select_by_id\", paramList);");
-                    classBuilder.AppendLine($"\t\t string Data = sayaPostgreSQL.Select(\"{SettingHelper.tableName.ToLower()}_select_by_id\", paramList);");
+                    classBuilder.AppendLine($"\t\tPostgreSQLHandler postgreSQLHandler = new PostgreSQLHandler();");
+                    classBuilder.AppendLine($"\t\tstring Data = postgreSQLHandler.Select(\"{SettingHelper.tableName.ToLower()}_select_by_id\", paramList);");
                 }
                 //classBuilder.AppendLine($"\t\treturn {ConvertProperCaseStringToCamelCaseString(SettingHelper.tableName)};");
                 classBuilder.AppendLine($"\t\treturn Data;");

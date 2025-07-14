@@ -19,28 +19,30 @@ namespace AutoCode.Presentation
     /// </summary>
     public partial class ColumnSelectionForm : Window
     {
-        public static Dictionary<string, Tuple<string, bool, bool>> Temp_TableColumnList1 = new Dictionary<string, Tuple<string, bool, bool>>();
-
+        public static Dictionary<string, Tuple<string, bool, bool>> TableColumnList = new Dictionary<string, Tuple<string, bool, bool>>();
+        CheckBox checkBox = new CheckBox();
         public ColumnSelectionForm()
         {
             InitializeComponent();
-            Temp_TableColumnList1 = new Dictionary<string, Tuple<string, bool, bool>>();
+            TableColumnList = new Dictionary<string, Tuple<string, bool, bool>>();
+            Dictionary<string, Tuple<string, bool, bool>> ColumnsForChecking = new Dictionary<string, Tuple<string, bool, bool>>();
             foreach (var item in SettingHelper.Temp_TableColumnList.Keys)
             {
                 string key = item.ToString();
                 if (SettingHelper.Temp_TableColumnList.TryGetValue(key, out Tuple<string, bool, bool> x))
                 {
                     Tuple<string, bool, bool> value = x;
-                    if (!Temp_TableColumnList1.ContainsKey(key))
+                    if (!TableColumnList.ContainsKey(key))
                     {
-                        Temp_TableColumnList1.Add(key, value);
+                        ColumnsForChecking.Add(key,value);
+                        TableColumnList.Add(key, value);
                     }
                 }
             }
 
-            foreach (var item in Temp_TableColumnList1)
+            foreach (var item in ColumnsForChecking)
             {
-                CheckBox checkBox = new CheckBox();
+                
                 List<string> UncheckColumns = new List<string>() { "createddate", "createdby", "modifiedby", "modifieddate","modifyby","modifydate" };
                 if (item.Key.ToString() == SettingHelper.Temp_primaryKeyOfTable.ToString() || item.Key.ToLower() == "id")
                 {
@@ -64,6 +66,7 @@ namespace AutoCode.Presentation
                         VerticalContentAlignment = VerticalAlignment.Top,
                         IsChecked = false
                     };
+                    TableColumnList.Remove(item.Key);
                 }
                 else
                 {
@@ -88,14 +91,14 @@ namespace AutoCode.Presentation
             string key = cb.Content.ToString();
             if (SettingHelper.Temp_TableColumnList.TryGetValue(key, out Tuple<string, bool, bool> value))
             {
-                Temp_TableColumnList1.Add(key, value);
+                TableColumnList.Add(key, value);
             }
         }
 
         private void CheckBox_Unchecked(object sender, RoutedEventArgs e)
         {
             CheckBox cb = sender as CheckBox;
-            Temp_TableColumnList1.Remove(cb.Content.ToString());
+            TableColumnList.Remove(cb.Content.ToString());
         }
 
         private void btnClose_Click(object sender, RoutedEventArgs e)
@@ -105,20 +108,10 @@ namespace AutoCode.Presentation
 
         private void btnConnectServer_Click(object sender, RoutedEventArgs e)
         {
-            SettingHelper.TableColumnList = Temp_TableColumnList1;
+            SettingHelper.TableColumnList = TableColumnList;
             SettingHelper.tableName = SettingHelper.Temp_tableName.ToString();
             SettingHelper.primaryKeyOfTable = SettingHelper.Temp_primaryKeyOfTable.ToString();
             this.Close();
         }
-
-        //private void CheckAll_Checked(object sender, RoutedEventArgs e)
-        //{
-        //    checkBox.IsChecked = true;
-        //}
-
-        //private void UnCheckAll_Checked(object sender, RoutedEventArgs e)
-        //{
-        //    checkBox.IsChecked = false;
-        //}
     }
 }
