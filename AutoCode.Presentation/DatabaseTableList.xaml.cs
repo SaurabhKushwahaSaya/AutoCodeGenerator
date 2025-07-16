@@ -221,12 +221,18 @@ namespace AutoCode.Presentation
                     {
                         txtBlockCode.Text = txtBlockCode.Text + GetPaginationModelCode();
                         txtBlockCode.Text = txtBlockCode.Text + GetPaginationDataListModelCode(SettingHelper.tableName);
+                        txtBlockCode.Text = txtBlockCode.Text + GetDataTablePagintaionCode();
                         txtBlockCode.Text = txtBlockCode.Text + GenerateSelectAllRecordWithPagination();
                     }
                     if (getList.IsChecked.Value)
                     {
                         txtBlockCode.Text = txtBlockCode.Text + GenerateListCode();
                     }
+                }
+                if(!chkObjModel.IsChecked.Value && !chkObjSP.IsChecked.Value && !chkObjCode.IsChecked.Value)
+                {
+                    MessageBox.Show("Please Check Given Checkbox according to your requirment!");
+                    return;
                 }
             }
             catch (Exception ex)
@@ -325,11 +331,11 @@ namespace AutoCode.Presentation
                         dataType = GetColumnTypeForPostgreSql(item.Value.Item1);
                     if (item.Value.Item2)
                     {
-                        classBuilder.AppendLine($"    public {dataType}? {columnName} {{ get; set; }}");
+                        classBuilder.AppendLine($"\tpublic {dataType}? {columnName} {{ get; set; }}");
                     }
                     else
                     {
-                        classBuilder.AppendLine($"    public {dataType} {columnName} {{ get; set; }}");
+                        classBuilder.AppendLine($"\tpublic {dataType} {columnName} {{ get; set; }}");
                     }
                 }
                 classBuilder.AppendLine("}");
@@ -361,10 +367,6 @@ namespace AutoCode.Presentation
                     classBuilder.AppendLine("GO");
                     classBuilder.AppendLine("");
                     classBuilder.AppendLine($"CREATE PROCEDURE [{SettingHelper.tableName}_Insert]");
-                    classBuilder.AppendLine("");
-                    classBuilder.AppendLine("");
-                    classBuilder.AppendLine("");
-
                     insertBuilder.AppendLine($"AS");
                     insertBuilder.AppendLine($"BEGIN");
                     insertBuilder.AppendLine($"SET NOCOUNT ON;");
@@ -374,7 +376,7 @@ namespace AutoCode.Presentation
                     for (int i = 0; i < SettingHelper.TableColumnList.Count(); i++)
                     {
                         var item = SettingHelper.TableColumnList.ElementAt(i);
-                        if (!item.Value.Item3)
+                        if (!item.Value.Item3 || item.Key == "Id")
                         {
                             classBuilder.AppendLine(GetParameterForStoreProcedureForSQL(item.Key, item.Value.Item1));
                             if (isFirstRow == false)
@@ -467,9 +469,6 @@ namespace AutoCode.Presentation
                     classBuilder.AppendLine("GO");
                     classBuilder.AppendLine("");
                     classBuilder.AppendLine($"CREATE PROCEDURE [{SettingHelper.tableName}_Update]");
-                    classBuilder.AppendLine("");
-                    classBuilder.AppendLine("");
-
                     bool appendComma = false;
                     for (int i = 0; i < SettingHelper.TableColumnList.Count(); i++)
                     {
@@ -480,7 +479,7 @@ namespace AutoCode.Presentation
                         }
                         appendComma = true;
                         classBuilder.AppendLine(GetParameterForStoreProcedureForSQL(item.Key, item.Value.Item1));
-                        if (item.Value.Item3)
+                        if (item.Value.Item3 || item.Key == "Id")
                         {
                             WhereBuilder.AppendLine($"WHERE [{item.Key}] = @{item.Key}");
                         }
@@ -569,8 +568,6 @@ namespace AutoCode.Presentation
                     classBuilder.AppendLine("GO");
                     classBuilder.AppendLine("");
                     classBuilder.AppendLine($"CREATE PROCEDURE [{SettingHelper.tableName}_Soft_Delete]");
-                    classBuilder.AppendLine("");
-                    classBuilder.AppendLine("");
                     classBuilder.AppendLine(GetParameterForStoreProcedureForSQL(deletedId, columnTypeforSqlServer));
                     classBuilder.AppendLine($"AS");
                     classBuilder.AppendLine($"BEGIN");
@@ -621,8 +618,6 @@ namespace AutoCode.Presentation
                     classBuilder.AppendLine("GO");
                     classBuilder.AppendLine("");
                     classBuilder.AppendLine($"CREATE PROCEDURE [{SettingHelper.tableName}_Hard_Delete]");
-                    classBuilder.AppendLine("");
-                    classBuilder.AppendLine("");
                     classBuilder.AppendLine(GetParameterForStoreProcedureForSQL(deletedId, columnTypeforSqlServer));
                     classBuilder.AppendLine($"AS");
                     classBuilder.AppendLine($"BEGIN");
@@ -673,8 +668,6 @@ namespace AutoCode.Presentation
                     classBuilder.AppendLine("GO");
                     classBuilder.AppendLine("");
                     classBuilder.AppendLine($"CREATE PROCEDURE [{SettingHelper.tableName}_Select_By_Id]");
-                    classBuilder.AppendLine("");
-                    classBuilder.AppendLine("");
                     classBuilder.AppendLine(GetParameterForStoreProcedureForSQL(SelectId, columnTypeforSqlServer));
                     classBuilder.AppendLine($"AS");
                     classBuilder.AppendLine($"BEGIN");
@@ -698,7 +691,7 @@ namespace AutoCode.Presentation
                     classBuilder.Append($"({SelectId.ToLower()} {columnTypeforPostgreSql})");
                     classBuilder.AppendLine($"\n RETURNS TABLE (");
                     parameters.Append($"   RETURN QUERY \n select ");
-                    
+
                     for (int i = 0; i < SettingHelper.TableColumnList.Count(); i++)
                     {
                         var item = SettingHelper.TableColumnList.ElementAt(i);
@@ -717,7 +710,7 @@ namespace AutoCode.Presentation
                     classBuilder.AppendLine($"\nLANGUAGE plpgsql");
                     classBuilder.AppendLine($"AS $function$");
                     classBuilder.AppendLine($"begin");
-                    
+
                     parameters.AppendLine($"\twhere \"{SelectId}\" = {SelectId.ToLower()};");
                     parameters.AppendLine($"END\r\n$function$\r\n;");
                 }
@@ -738,30 +731,30 @@ namespace AutoCode.Presentation
                 string tableNameAsVariable = ConvertProperCaseStringToCamelCaseString(SettingHelper.tableName);
                 string tableListAsVariable = $"{ConvertProperCaseStringToCamelCaseString(SettingHelper.tableName)}List";
 
-                classBuilder.AppendLine($"public static PaginationModel {SettingHelper.tableName}SelectListWithPaginationAndSearch(DataTablePagintaion dataTablePagintaion)");
+                classBuilder.AppendLine($"public static string {SettingHelper.tableName}SelectListWithPaginationAndSearch(DataTablePagintaion dataTablePagintaion)");
                 classBuilder.AppendLine("{\r\n\ttry\r\n\t{");
-                classBuilder.AppendLine($"\t\tPaginationModel paginationModel = new PaginationModel();");
+
+                classBuilder.AppendLine($"\t\tstring Data = \"\";");
                 classBuilder.AppendLine($"\t\tint skip = ((dataTablePagintaion.PageIndex - 1) * dataTablePagintaion.PageSize);");
                 classBuilder.AppendLine($"\t\tType myType = typeof({SettingHelper.tableName});");
                 classBuilder.AppendLine($"\t\tvar field = myType.GetProperty(dataTablePagintaion.SortField);");
                 classBuilder.AppendLine("\t\tif (field == null)\r\n\t\t{");
-                classBuilder.AppendLine("\t\t\tdataTablePagintaion.SortField = \"createddate\";");
-                classBuilder.AppendLine("\t\t\tdataTablePagintaion.SortType = -1;\r\n\t\t}");
+                classBuilder.AppendLine("\t\t\tdataTablePagintaion.SortField = \"createddate\";\n\t\t}\r\n\t\t");
                 classBuilder.AppendLine("\t\telse");
                 classBuilder.AppendLine($"\t\t\tdataTablePagintaion.SortField = field.Name.ToLower();");
                 if (SettingHelper.ConnectionType == Enum.ConnectionType.MicrosoftSQLServer)
                 {
-                    classBuilder.AppendLine($"List<SqlParameter> paramList = new List<SqlParameter>();");
-                    classBuilder.AppendLine($"paramList.Add(new SqlParameter(\"@SearchText\", dataTablePagintaion.SearchText));");
-                    classBuilder.AppendLine($"paramList.Add(new SqlParameter(\"@PageIndex\", dataTablePagintaion.PageIndex));");
-                    classBuilder.AppendLine($"paramList.Add(new SqlParameter(\"@PageSize\", dataTablePagintaion.PageSize));");
-                    classBuilder.AppendLine($"paramList.Add(new SqlParameter(\"@SortColumn\", dataTablePagintaion.SortField.ToString().ToLower()));");
-                    classBuilder.AppendLine($"paramList.Add(new SqlParameter(\"@SortOrder\", dataTablePagintaion.SortType));");
-                    classBuilder.AppendLine($" DataTable dt = SqlHelper.ExecuteDataTable(SettingHelper.SqlConnectionStringBuilder.ConnectionString, CommandType.StoredProcedure, \"{SettingHelper.tableName}_Select_List_With_Pagination_And_Search\", paramList.ToArray());");
-                    classBuilder.AppendLine("if(dt != null && dt.Rows.Count > 0) { ");
-                    classBuilder.AppendLine($"string JsonString = JsonConvert.SerializeObject(dt);");
-                    classBuilder.AppendLine($"List<{SettingHelper.tableName}> objList = JsonConvert.DeserializeObject<List<{SettingHelper.tableName}>>(JsonString);");
-                    classBuilder.AppendLine($"int totalRowsCount = Convert.ToInt32(((Newtonsoft.Json.Linq.JValue)((Newtonsoft.Json.Linq.JProperty)((Newtonsoft.Json.Linq.JContainer)JsonConvert.DeserializeObject(JsonString)).First.First).Value).Value);");
+                    classBuilder.AppendLine($"\t\t\tList<SqlParameter> paramList = new List<SqlParameter>();");
+                    classBuilder.AppendLine($"\t\t\tparamList.Add(new SqlParameter(\"@SearchText\", dataTablePagintaion.SearchText));");
+                    classBuilder.AppendLine($"\t\t\tparamList.Add(new SqlParameter(\"@PageIndex\", dataTablePagintaion.PageIndex));");
+                    classBuilder.AppendLine($"\t\t\tparamList.Add(new SqlParameter(\"@PageSize\", dataTablePagintaion.PageSize));");
+                    classBuilder.AppendLine($"\t\t\tparamList.Add(new SqlParameter(\"@SortColumn\", dataTablePagintaion.SortField.ToString().ToLower()));");
+                    classBuilder.AppendLine($"\t\t\tparamList.Add(new SqlParameter(\"@SortOrder\", dataTablePagintaion.SortType));");
+                    classBuilder.AppendLine($"\t\t\tDataTable dt = SqlHelper.ExecuteDataTable(SettingHelper.SqlConnectionStringBuilder.ConnectionString, CommandType.StoredProcedure, \"{SettingHelper.tableName}_Select_List_With_Pagination_And_Search\", paramList.ToArray());");
+                    classBuilder.AppendLine("\t\t\tif(dt != null && dt.Rows.Count > 0)");
+                    classBuilder.AppendLine($"\t\t\t\t\tData = JsonConvert.SerializeObject(dt);");
+                    //classBuilder.AppendLine($"\t\t\t\tList<{SettingHelper.tableName}> objList = JsonConvert.DeserializeObject<List<{SettingHelper.tableName}>>(JsonString);");
+                    //classBuilder.AppendLine($"\t\t\t\tint totalRowsCount = Convert.ToInt32(((Newtonsoft.Json.Linq.JValue)((Newtonsoft.Json.Linq.JProperty)((Newtonsoft.Json.Linq.JContainer)JsonConvert.DeserializeObject(JsonString)).First.First).Value).Value);");
                 }
                 else if (SettingHelper.ConnectionType == Enum.ConnectionType.PostgreSQLServer)
                 {
@@ -772,21 +765,9 @@ namespace AutoCode.Presentation
                     classBuilder.AppendLine($"\t\tparamList.Add(new NpgsqlParameter(@\"sortcolumn\", dataTablePagintaion.SortField));");
                     classBuilder.AppendLine($"\t\tparamList.Add(new NpgsqlParameter(@\"sorttype\", dataTablePagintaion.SortType));");
                     classBuilder.AppendLine($"\t\tPostgreSQLHandler postgreSQLHandler = new PostgreSQLHandler();");
-                    classBuilder.AppendLine($"\t\tList<DataListModel> dataList = postgreSQLHandler.ExecuteAsObject<List<DataListModel>>\t\t(\"{SettingHelper.tableName.ToLower()}_select_list_with_pagination_search_and_sort\", paramList);");
-                    classBuilder.AppendLine($"\t\tlong totalRowsCount = 0;\r\n\t\tif (dataList != null && dataList.Any())");
-                    classBuilder.AppendLine($"\t\t\ttotalRowsCount = dataList.First().TotalCount;");
-                    classBuilder.AppendLine($"\t\tstring jsonString = JsonConvert.SerializeObject(dataList);");
-                    classBuilder.AppendLine($"\t\tList<{SettingHelper.tableName}> objList = JsonConvert.DeserializeObject<List<{SettingHelper.tableName}>>(jsonString);");
+                    classBuilder.AppendLine($"\t\tData = postgreSQLHandler.Select(\"{SettingHelper.tableName.ToLower()}_select_list_with_pagination_search_and_sort\", paramList);");
                 }
-                classBuilder.AppendLine($"\t\tpaginationModel.TotalPages = (int)Math.Ceiling((float)totalRowsCount / dataTablePagintaion.PageSize);");
-                classBuilder.AppendLine($"\t\tpaginationModel.PageIndex = dataTablePagintaion.PageIndex;");
-                classBuilder.AppendLine($"\t\tpaginationModel.PageSize = dataTablePagintaion.PageSize;");
-                classBuilder.AppendLine($"\t\tpaginationModel.SearchText = dataTablePagintaion.SearchText;");
-                classBuilder.AppendLine($"\t\tpaginationModel.SortField = dataTablePagintaion.SortField;");
-                classBuilder.AppendLine($"\t\tpaginationModel.SortType = dataTablePagintaion.SortType;");
-                classBuilder.AppendLine($"\t\tpaginationModel.TotalRows = totalRowsCount;");
-                classBuilder.AppendLine($"\t\tpaginationModel.List = objList;");
-                classBuilder.AppendLine($"\t\treturn paginationModel;");
+                classBuilder.AppendLine($"\t\treturn Data;");
                 classBuilder.AppendLine("\t}\r\n\tcatch (Exception ex)\r\n\t{\r\n\t\tthrow ex;\r\n\t}\r\n}");
                 classBuilder.AppendLine("---------------------------------- End Select All with Pagination, Search And Sort Code ----------------------------------");
                 classBuilder.AppendLine();
@@ -797,6 +778,76 @@ namespace AutoCode.Presentation
                 throw ex;
             }
         }
+
+        // Method for Pagination by SIR 
+        //private string GenerateSelectAllRecordWithPagination()
+        //{
+        //    try
+        //    {
+        //        StringBuilder classBuilder = new StringBuilder();
+        //        classBuilder.AppendLine("---------------------------------- Start Select All with Pagination, Search And Sort Code ----------------------------------");
+        //        string tableNameAsVariable = ConvertProperCaseStringToCamelCaseString(SettingHelper.tableName);
+        //        string tableListAsVariable = $"{ConvertProperCaseStringToCamelCaseString(SettingHelper.tableName)}List";
+
+        //        classBuilder.AppendLine($"public static PaginationModel {SettingHelper.tableName}SelectListWithPaginationAndSearch(DataTablePagintaion dataTablePagintaion)");
+        //        classBuilder.AppendLine("{\r\n\ttry\r\n\t{");
+        //        classBuilder.AppendLine($"\t\tPaginationModel paginationModel = new PaginationModel();");
+        //        classBuilder.AppendLine($"\t\tint skip = ((dataTablePagintaion.PageIndex - 1) * dataTablePagintaion.PageSize);");
+        //        classBuilder.AppendLine($"\t\tType myType = typeof({SettingHelper.tableName});");
+        //        classBuilder.AppendLine($"\t\tvar field = myType.GetProperty(dataTablePagintaion.SortField);");
+        //        classBuilder.AppendLine("\t\tif (field == null)\r\n\t\t{");
+        //        classBuilder.AppendLine("\t\t\tdataTablePagintaion.SortField = \"createddate\";");
+        //        classBuilder.AppendLine("\t\t\tdataTablePagintaion.SortType = -1;\r\n\t\t}");
+        //        classBuilder.AppendLine("\t\telse");
+        //        classBuilder.AppendLine($"\t\t\tdataTablePagintaion.SortField = field.Name.ToLower();");
+        //        if (SettingHelper.ConnectionType == Enum.ConnectionType.MicrosoftSQLServer)
+        //        {
+        //            classBuilder.AppendLine($"List<SqlParameter> paramList = new List<SqlParameter>();");
+        //            classBuilder.AppendLine($"paramList.Add(new SqlParameter(\"@SearchText\", dataTablePagintaion.SearchText));");
+        //            classBuilder.AppendLine($"paramList.Add(new SqlParameter(\"@PageIndex\", dataTablePagintaion.PageIndex));");
+        //            classBuilder.AppendLine($"paramList.Add(new SqlParameter(\"@PageSize\", dataTablePagintaion.PageSize));");
+        //            classBuilder.AppendLine($"paramList.Add(new SqlParameter(\"@SortColumn\", dataTablePagintaion.SortField.ToString().ToLower()));");
+        //            classBuilder.AppendLine($"paramList.Add(new SqlParameter(\"@SortOrder\", dataTablePagintaion.SortType));");
+        //            classBuilder.AppendLine($" DataTable dt = SqlHelper.ExecuteDataTable(SettingHelper.SqlConnectionStringBuilder.ConnectionString, CommandType.StoredProcedure, \"{SettingHelper.tableName}_Select_List_With_Pagination_And_Search\", paramList.ToArray());");
+        //            classBuilder.AppendLine("if(dt != null && dt.Rows.Count > 0) { ");
+        //            classBuilder.AppendLine($"string JsonString = JsonConvert.SerializeObject(dt);");
+        //            classBuilder.AppendLine($"List<{SettingHelper.tableName}> objList = JsonConvert.DeserializeObject<List<{SettingHelper.tableName}>>(JsonString);");
+        //            classBuilder.AppendLine($"int totalRowsCount = Convert.ToInt32(((Newtonsoft.Json.Linq.JValue)((Newtonsoft.Json.Linq.JProperty)((Newtonsoft.Json.Linq.JContainer)JsonConvert.DeserializeObject(JsonString)).First.First).Value).Value);");
+        //        }
+        //        else if (SettingHelper.ConnectionType == Enum.ConnectionType.PostgreSQLServer)
+        //        {
+        //            classBuilder.AppendLine("\t\tList<NpgsqlParameter> paramList = new List<NpgsqlParameter>();");
+        //            classBuilder.AppendLine($"\t\tparamList.Add(new NpgsqlParameter(@\"offsetsize\", skip > 0 ? skip : 0));");
+        //            classBuilder.AppendLine($"\t\tparamList.Add(new NpgsqlParameter(@\"pagesize\", dataTablePagintaion.PageSize));");
+        //            classBuilder.AppendLine($"\t\tparamList.Add(new NpgsqlParameter(@\"searchtext\", dataTablePagintaion.SearchText));");
+        //            classBuilder.AppendLine($"\t\tparamList.Add(new NpgsqlParameter(@\"sortcolumn\", dataTablePagintaion.SortField));");
+        //            classBuilder.AppendLine($"\t\tparamList.Add(new NpgsqlParameter(@\"sorttype\", dataTablePagintaion.SortType));");
+        //            classBuilder.AppendLine($"\t\tPostgreSQLHandler postgreSQLHandler = new PostgreSQLHandler();");
+        //            classBuilder.AppendLine($"\t\tList<DataListModel> dataList = postgreSQLHandler.ExecuteAsObject<List<DataListModel>>\t\t(\"{SettingHelper.tableName.ToLower()}_select_list_with_pagination_search_and_sort\", paramList);");
+        //            classBuilder.AppendLine($"\t\tlong totalRowsCount = 0;\r\n\t\tif (dataList != null && dataList.Any())");
+        //            classBuilder.AppendLine($"\t\t\ttotalRowsCount = dataList.First().TotalCount;");
+        //            classBuilder.AppendLine($"\t\tstring jsonString = JsonConvert.SerializeObject(dataList);");
+        //            classBuilder.AppendLine($"\t\tList<{SettingHelper.tableName}> objList = JsonConvert.DeserializeObject<List<{SettingHelper.tableName}>>(jsonString);");
+        //        }
+        //        classBuilder.AppendLine($"\t\tpaginationModel.TotalPages = (int)Math.Ceiling((float)totalRowsCount / dataTablePagintaion.PageSize);");
+        //        classBuilder.AppendLine($"\t\tpaginationModel.PageIndex = dataTablePagintaion.PageIndex;");
+        //        classBuilder.AppendLine($"\t\tpaginationModel.PageSize = dataTablePagintaion.PageSize;");
+        //        classBuilder.AppendLine($"\t\tpaginationModel.SearchText = dataTablePagintaion.SearchText;");
+        //        classBuilder.AppendLine($"\t\tpaginationModel.SortField = dataTablePagintaion.SortField;");
+        //        classBuilder.AppendLine($"\t\tpaginationModel.SortType = dataTablePagintaion.SortType;");
+        //        classBuilder.AppendLine($"\t\tpaginationModel.TotalRows = totalRowsCount;");
+        //        classBuilder.AppendLine($"\t\tpaginationModel.List = objList;");
+        //        classBuilder.AppendLine($"\t\treturn paginationModel;");
+        //        classBuilder.AppendLine("\t}\r\n\tcatch (Exception ex)\r\n\t{\r\n\t\tthrow ex;\r\n\t}\r\n}");
+        //        classBuilder.AppendLine("---------------------------------- End Select All with Pagination, Search And Sort Code ----------------------------------");
+        //        classBuilder.AppendLine();
+        //        return classBuilder.ToString();
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        throw ex;
+        //    }
+        //}
         private string GenerateSelectAllWithPaginationStoreProcedureCode()
         {
             try
@@ -868,8 +919,8 @@ namespace AutoCode.Presentation
 
                     classBuilder.AppendLine($")");
                     classBuilder.AppendLine($"SELECT");
-                    classBuilder.AppendLine($"TotalCount");
-                    classBuilder.AppendLine($",ROWNUM");
+                    classBuilder.AppendLine($"ROWNUM");
+                    classBuilder.AppendLine($",TotalCount");
                     for (int i = 0; i < SettingHelper.TableColumnList.Count(); i++)
                     {
                         var item = SettingHelper.TableColumnList.ElementAt(i);
@@ -915,7 +966,16 @@ namespace AutoCode.Presentation
                             addComma = true;
                         }
                     }
-                    classBuilder.AppendLine($"\t) AS \"ROWNUM\", count(\"{SettingHelper.tableName}\".\"{selectId.ToString()}\") over () AS \"TotalCount\", \"{SettingHelper.tableName}\".* From \"{SettingHelper.tableName}\"");
+                    classBuilder.AppendLine($"\t) AS \"ROWNUM\", count(\"{SettingHelper.tableName}\".\"{selectId.ToString()}\") over () AS \"TotalCount\",");
+                    for (int i = 0; i < SettingHelper.TableColumnList.Count(); i++)
+                    {
+                        var item = SettingHelper.TableColumnList.ElementAt(i);
+                        classBuilder.Append($"\t\"{SettingHelper.tableName}\".\"{item.Key.ToString()}\"");
+                        if (i < SettingHelper.TableColumnList.Count() - 1)
+                            classBuilder.Append($", \n");
+                    }
+                    classBuilder.Append($"\n\tFrom \"{SettingHelper.tableName}\"\n");
+
                     bool addOr = false;
                     for (int i = 0; i < SettingHelper.TableColumnList.Count(); i++)
                     {
@@ -925,7 +985,7 @@ namespace AutoCode.Presentation
                             if (addOr)
                                 classBuilder.AppendLine($"\tOR");
                             else
-                                classBuilder.AppendLine($"\t WHERE ");
+                                classBuilder.AppendLine($"\tWHERE ");
                             classBuilder.AppendLine($"\t (searchtext IS NULL OR \"{SettingHelper.tableName}\".\"{item.Key.ToString()}\"  ILIKE CONCAT('%',searchtext,'%'))");
                             addOr = true;
                         }
@@ -942,6 +1002,154 @@ namespace AutoCode.Presentation
                 throw ex;
             }
         }
+
+
+        //SP code For Pagination by SIR
+        //private string GenerateSelectAllWithPaginationStoreProcedureCode()
+        //{
+        //    try
+        //    {
+        //        StringBuilder classBuilder = new StringBuilder();
+        //        string selectId = !string.IsNullOrEmpty(SettingHelper.primaryKeyOfTable) && SettingHelper.primaryKeyOfTable != "" ? SettingHelper.primaryKeyOfTable.ToString() : "Id";
+        //        classBuilder.AppendLine("---------------------------------- Start Select all with pagination SP Code ----------------------------------");
+        //        if (SettingHelper.ConnectionType == Enum.ConnectionType.MicrosoftSQLServer)
+        //        {
+        //            classBuilder.AppendLine($"USE [{SettingHelper.SqlConnectionStringBuilder.InitialCatalog}]");
+        //            classBuilder.AppendLine("");
+        //            classBuilder.AppendLine("SET ANSI_NULLS ON");
+        //            classBuilder.AppendLine("GO");
+        //            classBuilder.AppendLine("SET QUOTED_IDENTIFIER ON");
+        //            classBuilder.AppendLine("GO");
+        //            classBuilder.AppendLine("");
+        //            classBuilder.AppendLine($"CREATE PROCEDURE [{SettingHelper.tableName}_Select_List_With_Pagination_And_Search]");
+        //            classBuilder.AppendLine($"");
+        //            classBuilder.AppendLine($"@SearchText nvarchar(300)=null,\r\n@PageIndex INT = 1,\r\n@PageSize INT = 100,\r\n@SortColumn NVARCHAR(50) = '',\r\n@SortOrder int=1");
+        //            classBuilder.AppendLine($"");
+        //            classBuilder.AppendLine($"AS \r\n BEGIN");
+        //            classBuilder.AppendLine($"Declare ");
+        //            classBuilder.AppendLine($"@SearchTextTemp nvarchar(300),\r\n @PageIndexTemp INT,\r\n@PageSizeTemp INT,\r\n@SortColTemp NVARCHAR(50),\r\n@FirstRecTemp INT,");
+        //            classBuilder.AppendLine($"@LastRecTemp INT,\r\n@TotalRowsTemp INT");
+        //            classBuilder.AppendLine($"");
+        //            classBuilder.AppendLine($"SET @SearchTextTemp = LTRIM(RTRIM(@SearchText));");
+        //            classBuilder.AppendLine($"SET @PageIndexTemp = @PageIndex;");
+        //            classBuilder.AppendLine($"SET @PageSizeTemp = @PageSize;");
+        //            classBuilder.AppendLine($"SET @SortColTemp = LTRIM(RTRIM(@SortColumn));");
+        //            classBuilder.AppendLine($"SET @FirstRecTemp = ( @PageIndexTemp - 1 ) * @PageSizeTemp;");
+        //            classBuilder.AppendLine($"SET @LastRecTemp = ( @PageIndexTemp * @PageSizeTemp + 1 );");
+        //            classBuilder.AppendLine($"SET @TotalRowsTemp = @FirstRecTemp - @LastRecTemp + 1;");
+        //            classBuilder.AppendLine($"");
+        //            classBuilder.AppendLine($"WITH {SettingHelper.tableName}Data as(SELECT ROW_NUMBER() OVER (ORDER BY");
+        //            classBuilder.AppendLine($"");
+        //            bool addComma = false;
+
+        //            for (int i = 0; i < SettingHelper.TableColumnList.Count(); i++)
+        //            {
+        //                var item = SettingHelper.TableColumnList.ElementAt(i);
+        //                if (IsColumnString(item.Value.Item1) || IsColumnDate(item.Value.Item1))
+        //                {
+        //                    if (addComma)
+        //                        classBuilder.Append($",");
+        //                    classBuilder.AppendLine($" CASE WHEN @SortColTemp = '{item.Key.ToLower().ToString()}' AND @SortOrder = 1 THEN [{item.Key.ToString()}] END ASC");
+        //                    classBuilder.AppendLine($" ,CASE WHEN @SortColTemp = '{item.Key.ToLower().ToString()}' AND @SortOrder = -1 THEN [{item.Key.ToString()}] END DESC");
+        //                    addComma = true;
+        //                }
+        //            }
+        //            classBuilder.AppendLine($") AS ROWNUM, Count(Id) over () AS TotalCount, * From {SettingHelper.tableName}");
+        //            bool addOr = false;
+        //            for (int i = 0; i < SettingHelper.TableColumnList.Count(); i++)
+        //            {
+        //                var item = SettingHelper.TableColumnList.ElementAt(i);
+        //                if (IsColumnString(item.Value.Item1))
+        //                {
+        //                    if (addOr)
+        //                        classBuilder.AppendLine($"OR");
+        //                    else
+        //                        classBuilder.AppendLine($" WHERE (");
+
+        //                    classBuilder.AppendLine($" (@SearchTextTemp IS NULL OR [{item.Key.ToString()}]  LIKE '%' + @SearchTextTemp + '%')");
+        //                    if (addOr == false)
+        //                        addOr = true;
+        //                }
+        //            }
+        //            if (addOr)
+        //                classBuilder.AppendLine($")");
+
+        //            classBuilder.AppendLine($")");
+        //            classBuilder.AppendLine($"SELECT");
+        //            classBuilder.AppendLine($"TotalCount");
+        //            classBuilder.AppendLine($",ROWNUM");
+        //            for (int i = 0; i < SettingHelper.TableColumnList.Count(); i++)
+        //            {
+        //                var item = SettingHelper.TableColumnList.ElementAt(i);
+        //                classBuilder.AppendLine($",{item.Key.ToString()}");
+        //            }
+        //            classBuilder.AppendLine($"FROM {SettingHelper.tableName}Data");
+        //            classBuilder.AppendLine($"WHERE ROWNUM > @FirstRecTemp AND ROWNUM < @LastRecTemp");
+        //            classBuilder.AppendLine($"ORDER BY ROWNUM ASC");
+        //            classBuilder.AppendLine($"");
+        //            classBuilder.AppendLine($"END");
+        //        }
+        //        else if (SettingHelper.ConnectionType == Enum.ConnectionType.PostgreSQLServer)
+        //        {
+        //            classBuilder.Append($"CREATE OR REPLACE FUNCTION public.{SettingHelper.tableName.ToLower()}_select_list_with_pagination_search_and_sort");
+        //            classBuilder.Append($"(offsetsize bigint, pagesize bigint, searchtext varchar, sortcolumn varchar, sorttype integer DEFAULT '-1'::integer)");
+        //            classBuilder.Append($"\r\nRETURNS TABLE (\"ROWNUM\" bigint, \"TotalCount\" bigint,");
+        //            for (int i = 0; i < SettingHelper.TableColumnList.Count(); i++)
+        //            {
+        //                var item = SettingHelper.TableColumnList.ElementAt(i);
+        //                classBuilder.Append($"\"{item.Key.ToString()}\" {item.Value.Item1}");
+        //                if (i < SettingHelper.TableColumnList.Count() - 1)
+        //                    classBuilder.Append($", ");
+        //            }
+        //            classBuilder.AppendLine($")");
+        //            classBuilder.AppendLine($"LANGUAGE plpgsql");
+        //            classBuilder.AppendLine($"AS $function$");
+        //            classBuilder.AppendLine($"declare");
+        //            classBuilder.AppendLine($"\tSortColTemp varchar = TRIM(BOTH FROM sortcolumn);");
+        //            classBuilder.AppendLine($"begin");
+        //            classBuilder.AppendLine($"\treturn query\r\n\tSELECT ROW_NUMBER() OVER (ORDER BY");
+        //            bool addComma = false;
+        //            for (int i = 0; i < SettingHelper.TableColumnList.Count(); i++)
+        //            {
+        //                var item = SettingHelper.TableColumnList.ElementAt(i);
+        //                if (IsColumnString(item.Value.Item1) || IsColumnDate(item.Value.Item1))
+        //                {
+        //                    if (addComma)
+        //                        classBuilder.Append($"\t\t,");
+        //                    else
+        //                        classBuilder.Append($"\t\t");
+        //                    classBuilder.AppendLine($"CASE WHEN sortcolumn = '{item.Key.ToLower().ToString()}' AND sorttype = 1 THEN \"{SettingHelper.tableName}\".\"{item.Key.ToString()}\" END ASC");
+        //                    classBuilder.AppendLine($"\t\t,CASE WHEN sortcolumn = '{item.Key.ToLower().ToString()}' AND sorttype = -1 THEN \"{SettingHelper.tableName}\".\"{item.Key.ToString()}\" END DESC");
+        //                    addComma = true;
+        //                }
+        //            }
+        //            classBuilder.AppendLine($"\t) AS \"ROWNUM\", count(\"{SettingHelper.tableName}\".\"{selectId.ToString()}\") over () AS \"TotalCount\", \"{SettingHelper.tableName}\".* From \"{SettingHelper.tableName}\"");
+        //            bool addOr = false;
+        //            for (int i = 0; i < SettingHelper.TableColumnList.Count(); i++)
+        //            {
+        //                var item = SettingHelper.TableColumnList.ElementAt(i);
+        //                if (IsColumnString(item.Value.Item1))
+        //                {
+        //                    if (addOr)
+        //                        classBuilder.AppendLine($"\tOR");
+        //                    else
+        //                        classBuilder.AppendLine($"\t WHERE ");
+        //                    classBuilder.AppendLine($"\t (searchtext IS NULL OR \"{SettingHelper.tableName}\".\"{item.Key.ToString()}\"  ILIKE CONCAT('%',searchtext,'%'))");
+        //                    addOr = true;
+        //                }
+        //            }
+        //            classBuilder.AppendLine($"\toffset offsetsize");
+        //            classBuilder.AppendLine($"\tlimit pagesize;");
+        //            classBuilder.AppendLine($"END\r\n$function$\r\n;");
+        //        }
+        //        classBuilder.AppendLine($"---------------------------------- End Select all with pagination SP Code ----------------------------------");
+        //        return classBuilder.ToString();
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        throw ex;
+        //    }
+        //}
         private string GenerateListStoreProcedure()
         {
             try
@@ -1132,7 +1340,7 @@ namespace AutoCode.Presentation
                         classBuilder.AppendLine($"\t\tparamList.Add(new NpgsqlParameter(@\"{item.Key.ToLower().ToString()}\", {tableNameAsVariable}.{item.Key}));");
                         //}
                     }
-                        classBuilder.AppendLine("\t\tPostgreSQLHandler postgreSQLHandler = new PostgreSQLHandler();");
+                    classBuilder.AppendLine("\t\tPostgreSQLHandler postgreSQLHandler = new PostgreSQLHandler();");
                     classBuilder.AppendLine($"\t\tbool spResult = postgreSQLHandler.ExecuteAsScalar<bool>(\"{SettingHelper.tableName.ToLower()}_update\", paramList);");
                 }
                 classBuilder.AppendLine("\t}\r\n\tcatch (Exception ex)\r\n\t{\r\n\t\tthrow ex;\r\n\t}\r\n}");
@@ -1151,7 +1359,7 @@ namespace AutoCode.Presentation
             {
                 StringBuilder classBuilder = new StringBuilder();
                 classBuilder.AppendLine("---------------------------------- Start Pagination Model Code ----------------------------------");
-                classBuilder.AppendLine("public class PaginationModel{\r\npublic object List{ get; set; }\r\npublic int PageSize{ get; set; }\r\n public int PageIndex { get; set; }\r\n public int TotalRows { get; set; }\r\n public int TotalPages { get; set; }\r\n public string SearchText { get; set; }\r\npublic string SortField { get; set; }\r\npublic int SortType { get; set; }\r\n}");
+                classBuilder.AppendLine("public class PaginationModel\n{\r\n\tpublic object List{ get; set; }\r\n\tpublic int PageSize{ get; set; }\r\n\tpublic int PageIndex { get; set; }\r\n\tpublic int TotalRows { get; set; }\r\n\tpublic int TotalPages { get; set; }\r\n\tpublic string SearchText { get; set; }\r\n\tpublic string SortField { get; set; }\r\n\tpublic int SortType { get; set; }\r\n}");
                 classBuilder.AppendLine("---------------------------------- End Pagination Model Code ----------------------------------");
                 return classBuilder.ToString();
             }
@@ -1181,7 +1389,7 @@ namespace AutoCode.Presentation
             {
                 StringBuilder classBuilder = new StringBuilder();
                 classBuilder.AppendLine("---------------------------------- Start Pagination Model Code ----------------------------------");
-                classBuilder.AppendLine("public class DataTablePagintaion \r\n{ \r\n public DataTablePagintaion() \r\n { \r\n PageSize = 20; \r\n SortType = 1; \r\n } \r\n public int PageIndex { get; set; }\r\n public int PageSize { get; set; }\r\n public string SearchText { get; set; }\r\n public string SortField { get; set; }\r\n public int SortType { get; set; } \r\n }");
+                classBuilder.AppendLine("public class DataTablePagintaion \r\n{ \r\n\tpublic DataTablePagintaion() \r\n\t{ \r\n\t\tPageSize = 20; \r\n\t\tSortType = 1; \r\n\t} \r\n\tpublic int PageIndex { get; set; }\r\n\tpublic int PageSize { get; set; }\r\n\tpublic string SearchText { get; set; }\r\n\tpublic string SortField { get; set; }\r\n\tpublic int SortType { get; set; } \r\n }");
                 classBuilder.AppendLine("---------------------------------- End Pagination Model Code ----------------------------------");
                 return classBuilder.ToString();
             }
@@ -1338,7 +1546,7 @@ namespace AutoCode.Presentation
                     case "nvarchar":
                     case "text":
                     case "ntext":
-                        return $"@{columnName} {type} = ''";
+                        return $"@{columnName} {type} (200)= ''";
                     case "datetime":
                     case "smalldatetime":
                     case "date":
