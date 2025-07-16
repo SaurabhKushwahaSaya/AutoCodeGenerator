@@ -35,7 +35,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>logo.ico</ApplicationIcon>
+    <ApplicationIcon>32.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="BusyIndicator, Version=2.1.0.0, Culture=neutral, processorArchitecture=MSIL">
@@ -152,6 +152,7 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <Resource Include="Images\logo.ico" />
+    <Resource Include="32.ico" />
     <Content Include="log4net.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
