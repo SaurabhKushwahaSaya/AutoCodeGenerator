@@ -19,11 +19,13 @@ namespace AutoCode.Presentation
 
         public static Dictionary<string, Tuple<string, bool, bool>> TableColumnList = new Dictionary<string, Tuple<string, bool, bool>>();
         public static string primaryKeyOfTable = string.Empty;
+        public static string primaryKeyDataType = string.Empty;
         public static string tableName = string.Empty;
 
 
         public static Dictionary<string, Tuple<string, bool, bool>> Temp_TableColumnList = new Dictionary<string, Tuple<string, bool, bool>>();
         public static string Temp_primaryKeyOfTable = string.Empty;
+        public static string Temp_primaryKeyDataType = string.Empty;
         public static string Temp_tableName = string.Empty;
 
     }
