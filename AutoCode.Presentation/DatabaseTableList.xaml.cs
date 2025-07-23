@@ -1530,18 +1530,13 @@ namespace AutoCode.Presentation
                 else if (SettingHelper.ConnectionType == Enum.ConnectionType.PostgreSQLServer)
                 {
                     string columnTypeforPostgreSql = !string.IsNullOrEmpty(SettingHelper.primaryKeyOfTable) && SettingHelper.primaryKeyOfTable != "" ? GetColumnTypeForPostgreSql(SettingHelper.TableColumnList.First(x => x.Key == SettingHelper.primaryKeyOfTable).Value.Item1) : "int";
-                    //classBuilder.AppendLine($"public {SettingHelper.tableName} {SettingHelper.tableName}SelectById ({columnTypeforPostgreSql} {SelectId})");
                     classBuilder.AppendLine($"public static string {SettingHelper.tableName}SelectById ({columnTypeforPostgreSql} {SelectId})");
                     classBuilder.AppendLine("{\r\n\ttry\r\n\t{");
-                    //classBuilder.AppendLine($"\t\t{SettingHelper.tableName} {ConvertProperCaseStringToCamelCaseString(SettingHelper.tableName)} = null;");
                     classBuilder.AppendLine("\t\tList<NpgsqlParameter> paramList = new List<NpgsqlParameter>();");
-                    classBuilder.AppendLine($"\t\tparamList.Add(new NpgsqlParameter(@\"{SelectId.ToLower()}\",  NpgsqlTypes.NpgsqlDbType.{NpgsqlDbType}) {{Value = {tableNameAsVariable}.{SelectId}}});");
-                    //classBuilder.AppendLine($"\t\t{ConvertProperCaseStringToCamelCaseString(SettingHelper.tableName)} = PostgreSQLHandler.ExecuteAsObject<{SettingHelper.tableName}>(\"{SettingHelper.tableName.ToLower()}_select_by_id\", paramList);");
-                    //classBuilder.AppendLine($"\t\t string Data = PostgreSQLHandler.ExecuteAsObject<{SettingHelper.tableName}>(\"{SettingHelper.tableName.ToLower()}_select_by_id\", paramList);");
+                    classBuilder.AppendLine($"\t\tparamList.Add(new NpgsqlParameter(@\"{SelectId.ToLower()}\",  NpgsqlTypes.NpgsqlDbType.{NpgsqlDbType}) {{Value = {SelectId}}});");
                     classBuilder.AppendLine($"\t\tPostgreSQLHandler postgreSQLHandler = new PostgreSQLHandler();");
                     classBuilder.AppendLine($"\t\tstring Data = postgreSQLHandler.Select(\"{SettingHelper.tableName.ToLower()}_select_by_id\", paramList);");
                 }
-                //classBuilder.AppendLine($"\t\treturn {ConvertProperCaseStringToCamelCaseString(SettingHelper.tableName)};");
                 classBuilder.AppendLine($"\t\treturn Data;");
                 classBuilder.AppendLine("\t}\r\n\tcatch (Exception ex)\r\n\t{\r\n\t\tthrow ex;\r\n\t}\r\n}");
                 classBuilder.AppendLine("---------------------------------- End Select Record By Id Code ----------------------------------");
