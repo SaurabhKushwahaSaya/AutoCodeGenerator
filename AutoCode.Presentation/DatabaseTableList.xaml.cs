@@ -1483,7 +1483,7 @@ namespace AutoCode.Presentation
             {
                 StringBuilder classBuilder = new StringBuilder();
                 classBuilder.AppendLine("---------------------------------- Start Pagination Model Code ----------------------------------");
-                classBuilder.AppendLine("public class DataTablePagintaion \r\n{ \r\n\tpublic DataTablePagintaion() \r\n\t{ \r\n\t\tPageSize = 20; \r\n\t\tSortType = 1; \r\n\t} \r\n\tpublic int PageIndex { get; set; }\r\n\tpublic int PageSize { get; set; }\r\n\tpublic string SearchText { get; set; }\r\n\tpublic string SortField { get; set; }\r\n\tpublic int SortType { get; set; } \r\n }");
+                classBuilder.AppendLine("public class DataTablePagintaion \r\n{ \r\n\tpublic DataTablePagintaion() \r\n\t{ \r\n\t\tPageSize = 20; \r\n\t\tSortType = 1; \r\n\t\tSortField = \"\"; \r\n\t} \r\n\tpublic int PageIndex { get; set; }\r\n\tpublic int PageSize { get; set; }\r\n\tpublic string SearchText { get; set; }\r\n\tpublic string SortField { get; set; }\r\n\tpublic int SortType { get; set; } \r\n }");
                 classBuilder.AppendLine("---------------------------------- End Pagination Model Code ----------------------------------");
                 classBuilder.AppendLine();
                 return classBuilder.ToString();
