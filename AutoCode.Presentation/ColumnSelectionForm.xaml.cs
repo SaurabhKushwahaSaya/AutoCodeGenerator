@@ -111,6 +111,7 @@ namespace AutoCode.Presentation
             SettingHelper.TableColumnList = TableColumnList;
             SettingHelper.tableName = SettingHelper.Temp_tableName.ToString();
             SettingHelper.primaryKeyOfTable = SettingHelper.Temp_primaryKeyOfTable.ToString();
+            SettingHelper.primaryKeyDataType = SettingHelper.Temp_primaryKeyDataType.ToString();
             this.Close();
         }
     }
